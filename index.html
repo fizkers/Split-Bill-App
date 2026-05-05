@@ -1,0 +1,3588 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SplitBill — HFZ Company Office</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<!-- jsPDF for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- QR Code generator -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+:root{
+  --bg:#f5f0e8;--paper:#faf7f2;--ink:#1a1814;--ink2:#3d3830;
+  --muted:#8c8070;--line:#d8cfc0;--accent:#e85d2f;--accent2:#2b7a4b;
+  --warn:#c4820a;--step-off:#cbc5b8;
+  --r:16px;--r-sm:10px;
+  --mono:'Space Mono',monospace;--sans:'Outfit',sans-serif;
+  --shadow:0 4px 24px rgba(30,24,16,.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;
+  padding:0 0 80px;
+  background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 30h60' stroke='%23d8cfc0' stroke-width='.5' fill='none'/%3E%3C/svg%3E");}
+
+/* ── TOP NAV ── */
+.topnav{
+  background:var(--ink);color:var(--paper);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 12px rgba(0,0,0,.25);
+}
+.topnav-title{font-family:var(--sans);font-weight:800;font-size:18px;letter-spacing:-.5px;}
+.topnav-title span{color:var(--accent);}
+.hamburger{background:transparent;border:none;cursor:pointer;
+  color:var(--paper);font-size:20px;padding:4px 6px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;transition:.2s;}
+.hamburger:hover{background:rgba(255,255,255,.12);}
+.topnav-icon-btn{
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  color:var(--paper);width:34px;height:34px;border-radius:8px;
+  cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;
+  transition:.2s;
+}
+.topnav-icon-btn:hover{background:rgba(255,255,255,.2);}
+
+/* ── MODALS (License, About, Theme, Stats) ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(26,24,20,.8);
+  z-index:800;align-items:center;justify-content:center;padding:16px;
+}
+.modal-overlay.open{display:flex;animation:fadeIn .2s;}
+.modal-box{
+  background:var(--paper);border:2px solid var(--ink);border-radius:var(--r);
+  max-width:500px;width:100%;max-height:88vh;overflow-y:auto;
+  box-shadow:6px 6px 0 var(--ink);
+}
+.modal-head{
+  background:var(--ink);color:var(--paper);padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-radius:calc(var(--r)-2px) calc(var(--r)-2px) 0 0;
+}
+.modal-head h2{font-family:var(--mono);font-size:13px;letter-spacing:1.5px;}
+.modal-body{padding:24px;}
+.modal-close{background:transparent;border:1.5px solid rgba(255,255,255,.3);
+  color:#fff;width:28px;height:28px;border-radius:7px;cursor:pointer;
+  font-size:12px;display:flex;align-items:center;justify-content:center;}
+
+/* ── LICENSE CARD ── */
+.license-card{
+  background:var(--bg);border:2px solid var(--line);border-radius:var(--r-sm);
+  padding:20px;font-family:var(--mono);font-size:11.5px;line-height:1.9;
+  color:var(--ink2);position:relative;overflow:hidden;
+}
+.license-card::before{
+  content:'HFZ';position:absolute;right:-10px;bottom:-14px;
+  font-size:90px;font-weight:900;color:rgba(232,93,47,.05);
+  font-family:var(--sans);letter-spacing:-4px;pointer-events:none;
+}
+.license-stamp{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--accent2);color:#fff;
+  border-radius:6px;padding:4px 12px;font-size:11px;font-weight:700;
+  letter-spacing:.8px;text-transform:uppercase;margin-top:12px;
+}
+.license-divider{border:none;border-top:1.5px dashed var(--line);margin:14px 0;}
+.license-sig{font-family:var(--sans);font-size:18px;font-weight:800;
+  color:var(--ink);letter-spacing:-.5px;}
+
+/* ── STATS GRID ── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.stat-box{background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r-sm);
+  padding:14px;text-align:center;}
+.stat-box .sv{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--ink);}
+.stat-box .sl{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--muted);margin-top:3px;}
+
+/* ── THEME SWITCHER ── */
+.theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.theme-btn{
+  border:2px solid var(--line);border-radius:10px;padding:10px 6px;
+  cursor:pointer;text-align:center;transition:.2s;background:var(--paper);
+  font-size:11px;font-weight:700;color:var(--ink);
+}
+.theme-btn:hover{border-color:var(--ink);}
+.theme-btn.active{border-color:var(--ink);box-shadow:3px 3px 0 var(--accent);}
+.theme-btn .tc{width:28px;height:28px;border-radius:50%;margin:0 auto 6px;border:2px solid rgba(0,0,0,.1);}
+
+/* ── SPLIT MODES ── */
+.split-mode-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.split-mode-btn{
+  flex:1;min-width:100px;padding:10px;border:2px solid var(--line);border-radius:var(--r-sm);
+  cursor:pointer;font-family:var(--sans);font-weight:700;font-size:12px;
+  text-align:center;background:var(--paper);transition:.2s;color:var(--ink);
+}
+.split-mode-btn:hover{border-color:var(--ink);}
+.split-mode-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink);box-shadow:2px 2px 0 var(--accent);}
+.split-mode-btn i{display:block;font-size:16px;margin-bottom:4px;}
+
+/* ── CUSTOM SPLIT TABLE ── */
+.custom-split-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+.custom-split-table th{background:var(--ink);color:var(--paper);padding:8px 10px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.8px;text-align:left;}
+.custom-split-table td{padding:8px 10px;border-bottom:1.5px dashed var(--line);}
+.custom-split-table input{
+  width:100%;background:var(--bg);border:1.5px solid var(--line);
+  border-radius:6px;padding:5px 8px;font-family:var(--mono);font-size:12px;
+  color:var(--ink);outline:none;text-align:right;
+}
+.custom-split-table input:focus{border-color:var(--ink);}
+.pct-total-row{background:var(--bg);font-weight:700;}
+
+/* ── CURRENCY CONVERTER PANEL ── */
+.conv-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.conv-result{background:var(--ink);color:var(--paper);border-radius:var(--r-sm);
+  padding:12px 16px;font-family:var(--mono);font-size:14px;font-weight:700;
+  text-align:center;margin-top:8px;letter-spacing:.5px;}
+.conv-rate-info{font-size:11px;color:var(--muted);font-family:var(--mono);
+  text-align:center;margin-top:6px;}
+
+/* ── COUNTDOWN TIMER ── */
+.countdown-display{
+  background:var(--ink);color:var(--paper);border-radius:var(--r);
+  padding:20px;text-align:center;margin:10px 0;
+  box-shadow:4px 4px 0 var(--accent);
+}
+.countdown-display .cd-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  opacity:.5;margin-bottom:6px;font-family:var(--mono);}
+.countdown-display .cd-value{font-family:var(--mono);font-size:28px;font-weight:700;
+  color:var(--accent);letter-spacing:2px;}
+.countdown-display .cd-sub{font-size:11px;opacity:.4;margin-top:4px;font-family:var(--mono);}
+.cd-segments{display:flex;gap:8px;justify-content:center;margin-top:8px;}
+.cd-seg{background:rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;min-width:54px;}
+.cd-seg .cs-val{font-family:var(--mono);font-size:20px;font-weight:700;}
+.cd-seg .cs-lbl{font-size:9px;opacity:.4;letter-spacing:1px;text-transform:uppercase;}
+
+/* ── QR CODE MODAL ── */
+.qr-card{
+  background:var(--ink);border-radius:var(--r);padding:24px;
+  text-align:center;box-shadow:5px 5px 0 var(--accent);margin-bottom:14px;
+}
+.qr-card .qr-title{font-family:var(--sans);font-size:16px;font-weight:800;color:#fff;margin-bottom:4px;}
+.qr-card .qr-sub{font-size:11px;color:rgba(255,255,255,.4);font-family:var(--mono);}
+.qr-box{
+  background:#fff;border-radius:12px;padding:12px;
+  display:inline-block;margin:14px auto;
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+}
+.qr-amount{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--accent);margin:8px 0;}
+.qr-info-row{
+  display:flex;justify-content:center;gap:20px;margin-top:10px;flex-wrap:wrap;
+}
+.qr-info-item{font-size:11px;color:rgba(255,255,255,.5);font-family:var(--mono);text-align:center;}
+.qr-info-item b{display:block;font-size:13px;color:#fff;font-weight:700;}
+
+/* ── PAYMENT TRACKER ── */
+.pay-person-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 14px;background:var(--bg);border:1.5px solid var(--line);
+  border-radius:var(--r-sm);margin-bottom:7px;transition:.2s;
+  cursor:pointer;
+}
+.pay-person-row.paid{border-color:var(--accent2);background:rgba(43,122,75,.07);}
+.pay-person-row.paid .pay-name{text-decoration:line-through;color:var(--muted);}
+.pay-name{font-size:13px;font-weight:600;flex:1;}
+.pay-amount{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:700;margin-right:10px;}
+.pay-status{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;transition:.2s;}
+.pay-person-row.paid .pay-status{background:var(--accent2);border-color:var(--accent2);color:#fff;}
+.pay-progress-bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:10px 0 4px;}
+.pay-progress-fill{height:100%;background:var(--accent2);border-radius:4px;transition:width .5s;}
+
+/* ── TIP CALCULATOR ── */
+.tip-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0;}
+.tip-btn{
+  padding:10px 6px;border:2px solid var(--line);border-radius:var(--r-sm);
+  cursor:pointer;font-family:var(--sans);font-weight:700;font-size:13px;
+  text-align:center;background:var(--paper);transition:.2s;color:var(--ink);
+}
+.tip-btn:hover{border-color:var(--ink);}
+.tip-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink);box-shadow:2px 2px 0 var(--accent);}
+.tip-result{
+  background:var(--ink);color:var(--paper);border-radius:var(--r-sm);padding:16px;
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;
+}
+.tip-stat{text-align:center;}
+.tip-stat .tv{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent);}
+.tip-stat .tl{font-size:10px;text-transform:uppercase;letter-spacing:.8px;opacity:.5;font-weight:600;margin-top:2px;}
+
+/* ── EXPENSE CATEGORIES ── */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.cat-card{
+  background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r-sm);
+  padding:12px;text-align:center;cursor:pointer;transition:.2s;
+}
+.cat-card:hover{border-color:var(--ink);}
+.cat-card.active{border-color:var(--accent);box-shadow:2px 2px 0 var(--accent);}
+.cat-card .cat-icon{font-size:22px;margin-bottom:4px;}
+.cat-card .cat-name{font-size:11px;font-weight:700;letter-spacing:.5px;}
+.cat-card .cat-total{font-family:var(--mono);font-size:12px;color:var(--accent);margin-top:2px;}
+
+/* ── NOTES PINNED ── */
+.pinned-note{
+  background:var(--warn);color:#fff;border-radius:var(--r-sm);
+  padding:10px 14px;font-size:12px;font-weight:600;
+  display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;
+  animation:slideIn .2s ease-out;
+}
+.pinned-note i{flex-shrink:0;margin-top:1px;}
+
+/* ── RECEIPT PRINT STYLE ── */
+@media print{
+  .topnav,.drawer,.drawer-overlay,footer,.btn-row,.deal-actions,
+  .steps-bar,.progress-bar,.add-grid,.item-actions,
+  #receipt-modal,.modal-overlay{display:none!important;}
+  body{background:#fff!important;padding:0!important;}
+  .card{box-shadow:none!important;border:1px solid #ccc!important;}
+}
+
+.share-card{
+  background:var(--ink);color:var(--paper);border-radius:var(--r);
+  padding:22px;text-align:center;box-shadow:5px 5px 0 var(--accent);
+  margin-bottom:12px;
+}
+.share-card .sc-title{font-family:var(--sans);font-size:18px;font-weight:800;margin-bottom:4px;}
+.share-card .sc-sub{font-size:12px;opacity:.5;font-family:var(--mono);}
+.share-card .sc-amount{
+  font-family:var(--mono);font-size:clamp(22px,6vw,34px);font-weight:700;
+  color:var(--accent);margin:12px 0;
+}
+.share-platforms{display:flex;gap:8px;flex-wrap:wrap;}
+.share-btn{
+  flex:1;min-width:80px;padding:10px;border-radius:var(--r-sm);
+  border:none;cursor:pointer;font-family:var(--sans);font-weight:700;
+  font-size:12px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:.2s;
+}
+.share-btn:hover{transform:translateY(-2px);}
+.share-btn i{font-size:18px;}
+.share-wa{background:#25D366;color:#fff;}
+.share-copy{background:var(--ink);color:var(--paper);border:1.5px solid var(--line);}
+.share-dl{background:var(--accent);color:#fff;}
+
+/* ── LOAN TRACKER ── */
+.loan-row{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 12px;border-radius:var(--r-sm);
+  border:1.5px solid var(--line);background:var(--bg);
+  margin-bottom:7px;animation:slideIn .2s;
+}
+.loan-badge{
+  font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;
+  flex-shrink:0;font-family:var(--mono);
+}
+.loan-badge.hutang{background:rgba(232,93,47,.15);color:var(--accent);}
+.loan-badge.piutang{background:rgba(43,122,75,.15);color:var(--accent2);}
+.loan-settled{opacity:.45;text-decoration:line-through;}
+
+/* ── QUICK MEMO ── */
+.memo-paper{
+  background:var(--paper);border:1.5px solid var(--line);
+  border-radius:var(--r-sm);position:relative;overflow:hidden;
+}
+.memo-paper::after{
+  content:'';position:absolute;inset:0;
+  background-image:repeating-linear-gradient(transparent,transparent 27px,rgba(100,90,70,.1) 27px,rgba(100,90,70,.1) 28.5px);
+  background-position:0 38px;pointer-events:none;
+}
+.memo-textarea{
+  width:100%;background:transparent;border:none;outline:none;resize:none;
+  font-family:var(--mono);font-size:12.5px;line-height:28.5px;
+  color:var(--ink);padding:10px 14px;min-height:220px;position:relative;z-index:1;
+}
+.memo-list{display:flex;flex-direction:column;gap:6px;}
+.memo-item{
+  background:var(--bg);border:1.5px solid var(--line);
+  border-radius:var(--r-sm);padding:10px 12px;
+  display:flex;gap:8px;align-items:flex-start;
+}
+.memo-item-text{flex:1;font-size:12px;font-family:var(--mono);color:var(--ink);line-height:1.6;word-break:break-word;}
+.memo-item-date{font-size:9px;color:var(--muted);flex-shrink:0;font-family:var(--mono);}
+
+/* ── BUDGET PLANNER ── */
+.budget-cat-row{
+  display:flex;align-items:center;gap:8px;margin-bottom:8px;
+}
+.budget-bar-wrap{
+  height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:4px;
+}
+.budget-bar-fill{height:100%;border-radius:4px;transition:width .5s;}
+.budget-summary-box{
+  background:var(--ink);color:var(--paper);border-radius:var(--r-sm);
+  padding:14px 16px;margin-top:12px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+
+/* ── EXPENSE CHART MODAL ── */
+#expense-chart-canvas{width:100%;height:220px;display:block;}
+.chart-legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.chart-legend-item{
+  display:flex;align-items:center;gap:5px;
+  font-size:11px;color:var(--ink2);font-family:var(--mono);
+}
+.chart-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+.hfz-footer{
+  text-align:center;padding:20px 16px;margin-top:20px;
+  border-top:1.5px dashed var(--line);
+}
+.hfz-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--ink);color:var(--paper);
+  border-radius:30px;padding:6px 16px;
+  font-size:11px;font-weight:700;letter-spacing:.8px;
+  font-family:var(--mono);
+  box-shadow:2px 2px 0 var(--accent);
+}
+
+
+/* ── SIDEBAR DRAWER ── */
+.drawer-overlay{
+  display:none;position:fixed;inset:0;background:rgba(26,24,20,.6);
+  z-index:200;
+}
+.drawer-overlay.open{display:block;animation:fadeIn .2s;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.drawer{
+  position:fixed;top:0;right:0;bottom:0;width:300px;max-width:90vw;
+  background:var(--paper);border-left:2px solid var(--ink);
+  z-index:201;transform:translateX(100%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+}
+.drawer.open{transform:translateX(0);}
+.drawer-head{
+  background:var(--ink);color:var(--paper);
+  padding:16px 20px;
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.drawer-head h2{font-family:var(--mono);font-size:14px;letter-spacing:1px;}
+.drawer-close{background:transparent;border:none;cursor:pointer;
+  color:var(--paper);font-size:18px;padding:4px;}
+.drawer-body{flex:1;overflow-y:auto;padding:16px;}
+
+/* drawer menu items */
+.drawer-menu-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;border-radius:var(--r-sm);
+  cursor:pointer;transition:.2s;margin-bottom:4px;
+  border:1.5px solid transparent;font-weight:600;font-size:14px;
+}
+.drawer-menu-item:hover{background:var(--bg);border-color:var(--line);}
+.drawer-menu-item.active-menu{
+  background:var(--bg);border-color:var(--ink);
+  box-shadow:2px 2px 0 var(--accent);
+}
+.drawer-menu-item i{width:18px;text-align:center;color:var(--accent);}
+.drawer-divider{border:none;border-top:1.5px dashed var(--line);margin:12px 0;}
+
+/* ── MAIN CONTENT ── */
+.main-content{padding:24px 16px 0;}
+.wrapper{max-width:660px;margin:0 auto;}
+
+/* ── HEADER ── */
+header{text-align:center;margin-bottom:32px;}
+.logo{display:inline-flex;align-items:center;justify-content:center;
+  width:56px;height:56px;background:var(--ink);border-radius:16px;
+  margin-bottom:12px;box-shadow:4px 4px 0 var(--accent);}
+.logo i{color:var(--bg);font-size:24px;}
+header h1{font-family:var(--sans);font-size:clamp(28px,6vw,42px);
+  font-weight:800;letter-spacing:-1.5px;color:var(--ink);line-height:1;}
+header h1 span{color:var(--accent);}
+header p{color:var(--muted);font-size:13px;margin-top:6px;}
+
+/* ── PROGRESS DOTS ── */
+.progress-bar{display:flex;gap:6px;justify-content:center;margin-bottom:10px;}
+.prog-dot{width:8px;height:8px;border-radius:50%;background:var(--line);transition:.3s;}
+.prog-dot.active{background:var(--ink);width:22px;border-radius:4px;}
+.prog-dot.done{background:var(--accent2);}
+
+/* ── STEP INDICATOR ── */
+.steps-bar{display:flex;align-items:center;justify-content:center;margin-bottom:28px;}
+.step-item{display:flex;flex-direction:column;align-items:center;
+  flex:1;max-width:150px;position:relative;cursor:pointer;}
+.step-item:not(:last-child)::after{
+  content:'';position:absolute;top:17px;left:calc(50% + 18px);
+  width:calc(100% - 36px);height:2px;background:var(--line);z-index:0;transition:.3s;}
+.step-item.done:not(:last-child)::after{background:var(--accent2);}
+.step-circle{width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  border:2px solid var(--step-off);color:var(--step-off);background:var(--paper);
+  transition:.3s;z-index:1;position:relative;}
+.step-item.active .step-circle{border-color:var(--ink);color:var(--paper);
+  background:var(--ink);box-shadow:3px 3px 0 var(--accent);}
+.step-item.done .step-circle{border-color:var(--accent2);background:var(--accent2);color:#fff;}
+.step-label{font-size:10px;font-weight:600;color:var(--step-off);
+  margin-top:5px;letter-spacing:.4px;text-transform:uppercase;transition:.3s;text-align:center;}
+.step-item.active .step-label{color:var(--ink);}
+.step-item.done .step-label{color:var(--accent2);}
+
+/* ── PANELS ── */
+.panel{display:none;animation:fadeUp .3s ease-out;}
+.panel.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── CARD ── */
+.card{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r);
+  padding:24px;margin-bottom:14px;box-shadow:var(--shadow);}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.card-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--muted);display:flex;align-items:center;gap:8px;}
+.card-title i{color:var(--accent);font-size:11px;}
+
+/* ── FIELDS ── */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+.field-label{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);}
+.field-input,.field-select{
+  background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r-sm);
+  padding:10px 13px;color:var(--ink);font-family:var(--sans);font-size:14px;font-weight:500;
+  outline:none;transition:border-color .2s,box-shadow .2s;
+  -webkit-appearance:none;appearance:none;width:100%;}
+.field-input:focus,.field-select:focus{border-color:var(--ink);box-shadow:3px 3px 0 var(--accent);}
+.field-input.err{border-color:var(--accent);}
+.sel-wrap{position:relative;}
+.sel-wrap::after{content:'\f107';font-family:'Font Awesome 6 Free';font-weight:900;
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  color:var(--muted);pointer-events:none;font-size:11px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:460px){.row2{grid-template-columns:1fr;}}
+.pfx-wrap{position:relative;}
+.pfx{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  font-family:var(--mono);font-size:12px;color:var(--muted);pointer-events:none;}
+.pfx-input{padding-left:32px !important;}
+
+/* ── BUTTONS ── */
+.btn{border:none;cursor:pointer;font-family:var(--sans);font-weight:700;border-radius:var(--r-sm);
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  transition:all .18s cubic-bezier(.4,0,.2,1);font-size:13px;}
+.btn-primary{background:var(--ink);color:var(--paper);padding:12px 22px;
+  box-shadow:3px 3px 0 var(--accent);}
+.btn-primary:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--accent);}
+.btn-primary:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--accent);}
+.btn-secondary{background:transparent;color:var(--ink);border:1.5px solid var(--line);padding:11px 20px;}
+.btn-secondary:hover{border-color:var(--ink);background:var(--bg);}
+.btn-accent{background:var(--accent);color:#fff;padding:12px 22px;box-shadow:3px 3px 0 var(--ink);}
+.btn-accent:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink);}
+.btn-green{background:var(--accent2);color:#fff;padding:12px 22px;box-shadow:3px 3px 0 var(--ink);}
+.btn-green:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink);}
+.btn-warn{background:var(--warn);color:#fff;padding:12px 22px;box-shadow:3px 3px 0 var(--ink);}
+.btn-warn:hover{transform:translate(-1px,-1px);}
+.btn-ghost{background:transparent;color:var(--muted);padding:10px 16px;
+  border:1.5px dashed var(--line);font-size:12px;}
+.btn-ghost:hover{color:var(--ink);border-color:var(--ink);}
+.btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap;}
+.ic-btn{
+  width:30px;height:30px;border-radius:7px;font-size:12px;
+  border:1.5px solid var(--line);background:transparent;color:var(--muted);
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  transition:.15s;
+}
+.ic-btn:hover{color:var(--ink);border-color:var(--ink);}
+.ic-btn.del:hover{color:var(--accent);border-color:var(--accent);}
+.ic-btn.edt:hover{color:var(--warn);border-color:var(--warn);}
+.ic-btn.ok:hover{color:var(--accent2);border-color:var(--accent2);}
+
+/* ── ADD ITEM FORM ── */
+.add-grid{display:grid;grid-template-columns:1fr 120px 70px auto;gap:8px;align-items:end;}
+@media(max-width:540px){.add-grid{grid-template-columns:1fr 1fr;}.add-grid .span2{grid-column:span 2;}}
+
+/* ── ITEMS LIST ── */
+.items-list{display:flex;flex-direction:column;gap:7px;margin-top:14px;}
+.item-card{background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r-sm);
+  padding:11px 14px;display:flex;align-items:center;gap:9px;
+  animation:slideIn .2s ease-out;}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);}}
+.item-card.editing{border-color:var(--warn);background:#fffdf4;}
+.item-num{font-family:var(--mono);font-size:10px;font-weight:700;
+  color:var(--paper);background:var(--ink);
+  border-radius:5px;padding:2px 7px;flex-shrink:0;min-width:26px;text-align:center;}
+.item-name{flex:1;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.item-qty{font-family:var(--mono);font-size:11px;color:var(--muted);
+  background:var(--bg);border:1.5px solid var(--line);
+  border-radius:5px;padding:2px 7px;flex-shrink:0;white-space:nowrap;}
+.item-price{font-family:var(--mono);font-size:11px;color:var(--muted);flex-shrink:0;white-space:nowrap;}
+.item-total{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);flex-shrink:0;white-space:nowrap;}
+.item-actions{display:flex;gap:5px;flex-shrink:0;}
+.ei-name{flex:1;min-width:0;padding:5px 8px;font-size:12px;border-radius:6px;
+  border:1.5px solid var(--warn);background:var(--paper);font-family:var(--sans);color:var(--ink);outline:none;}
+.ei-num{width:72px;padding:5px 8px;font-size:12px;border-radius:6px;
+  border:1.5px solid var(--line);background:var(--paper);font-family:var(--mono);color:var(--ink);outline:none;}
+.empty{text-align:center;padding:28px 0;color:var(--muted);font-size:13px;
+  border:1.5px dashed var(--line);border-radius:var(--r-sm);}
+.empty i{font-size:26px;display:block;margin-bottom:8px;opacity:.35;}
+
+/* ── TOTAL BAR ── */
+.total-bar{background:var(--ink);color:var(--paper);border-radius:var(--r-sm);
+  padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-top:14px;}
+.tb-label{font-size:11px;font-weight:600;opacity:.6;letter-spacing:.5px;text-transform:uppercase;}
+.tb-value{font-family:var(--mono);font-size:17px;font-weight:700;color:var(--accent);}
+
+/* ── RESULT ── */
+.res-hero{background:var(--ink);border-radius:var(--r);padding:28px;text-align:center;
+  margin-bottom:14px;position:relative;overflow:hidden;box-shadow:5px 5px 0 var(--accent);}
+.res-hero::before{content:'';position:absolute;width:200px;height:200px;
+  background:radial-gradient(circle,rgba(232,93,47,.22),transparent 70%);
+  top:-50px;right:-50px;border-radius:50%;}
+.rh-label{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,.5);margin-bottom:6px;}
+.rh-amount{font-family:var(--mono);font-size:clamp(30px,8vw,48px);font-weight:700;color:#fff;line-height:1;}
+.rh-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:6px;font-family:var(--mono);}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+@media(max-width:460px){.res-grid{grid-template-columns:1fr;}}
+.res-stat{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r-sm);padding:14px 16px;}
+.rs-label{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px;}
+.rs-value{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--ink);}
+
+/* ── NOTES PAPER ── */
+.notes-paper{
+  background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r);
+  padding:28px 24px 20px 56px;
+  position:relative;box-shadow:4px 4px 0 var(--line),4px 4px 0 1.5px var(--ink);
+  margin-bottom:14px;
+}
+/* red margin line */
+.notes-paper::before{content:'';position:absolute;left:44px;top:0;bottom:0;
+  width:2px;background:rgba(232,93,47,.3);border-radius:1px;}
+/* ruled lines */
+.notes-paper::after{content:'';position:absolute;inset:0;border-radius:var(--r);
+  background-image:repeating-linear-gradient(transparent,transparent 28px,rgba(100,90,70,.1) 28px,rgba(100,90,70,.1) 29px);
+  background-position:0 58px;pointer-events:none;}
+.note-inner{position:relative;z-index:1;}
+.notes-title-input{width:100%;background:transparent;border:none;
+  border-bottom:2px solid var(--ink);padding:4px 0 8px;
+  font-family:var(--sans);font-size:18px;font-weight:700;color:var(--ink);
+  outline:none;margin-bottom:18px;}
+.notes-title-input::placeholder{color:var(--muted);}
+.notes-textarea{width:100%;background:transparent;border:none;outline:none;resize:none;
+  font-family:var(--mono);font-size:13px;line-height:29px;color:var(--ink2);min-height:200px;}
+.notes-textarea::placeholder{color:var(--muted);line-height:1.6;}
+.notes-meta{display:flex;align-items:center;justify-content:space-between;
+  margin-top:12px;padding-top:12px;border-top:1.5px dashed var(--line);
+  font-size:11px;color:var(--muted);font-family:var(--mono);}
+.deal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+
+/* ── RIWAYAT TRANSAKSI (DRAWER CONTENT) ── */
+.tx-card{
+  background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r-sm);
+  padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:.2s;
+  position:relative;
+}
+.tx-card:hover{border-color:var(--ink);}
+.tx-card .tx-title{font-weight:700;font-size:13px;margin-bottom:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:40px;}
+.tx-card .tx-meta{font-family:var(--mono);font-size:10px;color:var(--muted);}
+.tx-card .tx-amount{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);margin-top:3px;}
+.tx-del{position:absolute;top:10px;right:10px;background:transparent;border:none;
+  cursor:pointer;color:var(--muted);font-size:12px;padding:3px;}
+.tx-del:hover{color:var(--accent);}
+.tx-empty{text-align:center;padding:24px 0;color:var(--muted);font-size:12px;font-family:var(--mono);}
+.tx-empty i{font-size:24px;display:block;margin-bottom:8px;opacity:.3;}
+
+/* foto upload area */
+.upload-zone{
+  border:2px dashed var(--line);border-radius:var(--r-sm);
+  padding:20px;text-align:center;cursor:pointer;transition:.2s;
+  background:var(--bg);margin-bottom:10px;
+}
+.upload-zone:hover{border-color:var(--ink);background:var(--paper);}
+.upload-zone input[type=file]{display:none;}
+.upload-zone i{font-size:22px;color:var(--muted);display:block;margin-bottom:6px;}
+.upload-zone p{font-size:12px;color:var(--muted);}
+.photo-preview{position:relative;margin-bottom:10px;}
+.photo-preview img{width:100%;border-radius:var(--r-sm);border:1.5px solid var(--line);display:block;}
+.photo-remove{position:absolute;top:6px;right:6px;background:var(--ink);color:#fff;
+  border:none;cursor:pointer;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;}
+
+/* tx form */
+.tx-form{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r-sm);
+  padding:14px;margin-bottom:10px;}
+.tx-form .field{margin-bottom:8px;}
+.tx-form .field:last-child{margin-bottom:0;}
+.tx-form-title{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:10px;}
+
+/* ── MODAL ── */
+#receipt-modal{display:none;position:fixed;inset:0;
+  background:rgba(26,24,20,.75);z-index:500;
+  align-items:center;justify-content:center;padding:16px;}
+#receipt-modal.open{display:flex;animation:fadeIn .2s;}
+.receipt-wrap{background:var(--paper);border:2px solid var(--ink);border-radius:var(--r);
+  max-width:540px;width:100%;max-height:85vh;display:flex;flex-direction:column;
+  box-shadow:6px 6px 0 var(--ink);}
+.receipt-top{background:var(--ink);color:var(--paper);padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-radius:calc(var(--r) - 2px) calc(var(--r) - 2px) 0 0;flex-shrink:0;}
+.receipt-top h2{font-family:var(--mono);font-size:13px;letter-spacing:1.5px;}
+.receipt-body{padding:18px 20px;font-family:var(--mono);font-size:12px;line-height:1.85;
+  color:var(--ink);white-space:pre;overflow-y:auto;flex:1;overflow-x:auto;}
+.receipt-footer{padding:12px 20px;border-top:1.5px dashed var(--line);
+  display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0;}
+
+/* hidden canvas for JPG export */
+#export-canvas{display:none;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:var(--paper);border-radius:30px;
+  padding:9px 20px;font-size:13px;font-weight:600;
+  opacity:0;pointer-events:none;transition:all .3s;
+  white-space:nowrap;z-index:2000;border:1.5px solid var(--accent);}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.ok{border-color:var(--accent2);}
+#toast.err{border-color:var(--accent);}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;background:var(--ink);color:var(--paper);
+  border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;margin-left:auto;font-family:var(--mono);}
+.badge-accent{background:var(--accent);}
+
+/* ── PRINT STYLES ── */
+@media print{
+  .topnav,.steps-bar,.progress-bar,.btn-row,.deal-actions,.hamburger{display:none!important;}
+  .panel{display:block!important;}
+  .notes-paper{box-shadow:none!important;border:1px solid #999!important;page-break-inside:avoid;}
+  body{padding:0;background:white;}
+  .main-content{padding:0;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     TOP NAVIGATION
+══════════════════════════════════════════════ -->
+<div class="topnav">
+  <div style="display:flex;flex-direction:column;line-height:1.1">
+    <div class="topnav-title">Split<span>Bill</span></div>
+    <div style="font-size:9px;font-family:var(--mono);color:rgba(255,255,255,.45);letter-spacing:1.2px;margin-top:1px;">HFZ COMPANY OFFICE</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="topnav-icon-btn" onclick="showLicenseModal()" title="Lisensi">
+      <i class="fa-solid fa-certificate"></i>
+    </button>
+    <button class="topnav-icon-btn" onclick="showAboutModal()" title="Tentang">
+      <i class="fa-solid fa-circle-info"></i>
+    </button>
+    <button class="hamburger" onclick="openDrawer()" title="Menu">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     DRAWER SIDEBAR
+══════════════════════════════════════════════ -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div>
+      <div style="font-family:var(--mono);font-size:13px;letter-spacing:1px;">// MENU</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.4);letter-spacing:1.2px;margin-top:2px;">HFZ COMPANY OFFICE</div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="drawer-body">
+
+    <!-- NAVIGASI -->
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">📋 Halaman</div>
+    <div class="drawer-menu-item active-menu" id="menu-splitbill" onclick="switchView('splitbill');closeDrawer()">
+      <i class="fa-solid fa-calculator"></i> Split Bill
+    </div>
+    <div class="drawer-menu-item" id="menu-riwayat" onclick="switchView('riwayat');closeDrawer()">
+      <i class="fa-solid fa-clock-rotate-left"></i> Riwayat Transaksi
+      <span class="badge badge-accent" id="tx-count-badge">0</span>
+    </div>
+    <div class="drawer-menu-item" id="menu-stats" onclick="switchView('stats');closeDrawer()">
+      <i class="fa-solid fa-chart-pie"></i> Statistik & Analisis
+    </div>
+
+    <hr class="drawer-divider"/>
+
+    <!-- FITUR CEPAT -->
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">⚡ Fitur Cepat</div>
+
+    <div class="drawer-menu-item" onclick="openSharePanel();closeDrawer()">
+      <i class="fa-solid fa-share-nodes"></i> Bagikan Hasil
+      <span style="font-size:9px;color:var(--muted);margin-left:auto;font-family:var(--mono)">WA/Copy</span>
+    </div>
+    <div class="drawer-menu-item" onclick="openQRModal();closeDrawer()">
+      <i class="fa-solid fa-qrcode"></i> QR Code Tagihan
+      <span style="font-size:9px;color:var(--accent);margin-left:auto;font-family:var(--mono)">NEW</span>
+    </div>
+    <div class="drawer-menu-item" onclick="openPayTracker();closeDrawer()">
+      <i class="fa-solid fa-check-double"></i> Lacak Pembayaran
+      <span style="font-size:9px;color:var(--accent);margin-left:auto;font-family:var(--mono)">NEW</span>
+    </div>
+    <div class="drawer-menu-item" onclick="openTipCalc();closeDrawer()">
+      <i class="fa-solid fa-hand-holding-dollar"></i> Kalkulator Tip
+      <span style="font-size:9px;color:var(--accent);margin-left:auto;font-family:var(--mono)">NEW</span>
+    </div>
+    <div class="drawer-menu-item" onclick="openCountdown();closeDrawer()">
+      <i class="fa-solid fa-stopwatch"></i> Countdown Deadline
+    </div>
+    <div class="drawer-menu-item" onclick="openConverter();closeDrawer()">
+      <i class="fa-solid fa-arrows-rotate"></i> Konversi Mata Uang
+    </div>
+    <div class="drawer-menu-item" onclick="openThemePicker();closeDrawer()">
+      <i class="fa-solid fa-palette"></i> Ganti Tema Warna
+    </div>
+    <div class="drawer-menu-item" onclick="openSplitMode();closeDrawer()">
+      <i class="fa-solid fa-percent"></i> Mode Split Kustom
+    </div>
+    <div class="drawer-menu-item" onclick="openExpenseChart();closeDrawer()">
+      <i class="fa-solid fa-chart-column"></i> Grafik Pengeluaran
+      <span style="font-size:9px;color:var(--accent2);margin-left:auto;font-family:var(--mono)">NEW</span>
+    </div>
+    <div class="drawer-menu-item" onclick="openLoanTracker();closeDrawer()">
+      <i class="fa-solid fa-money-bill-transfer"></i> Hutang &amp; Piutang
+      <span style="font-size:9px;color:var(--accent2);margin-left:auto;font-family:var(--mono)">NEW</span>
+    </div>
+    <div class="drawer-menu-item" onclick="openQuickMemo();closeDrawer()">
+      <i class="fa-solid fa-note-sticky"></i> Quick Memo
+      <span style="font-size:9px;color:var(--accent2);margin-left:auto;font-family:var(--mono)">NEW</span>
+    </div>
+    <div class="drawer-menu-item" onclick="openBudgetPlanner();closeDrawer()">
+      <i class="fa-solid fa-piggy-bank"></i> Budget Planner
+      <span style="font-size:9px;color:var(--accent2);margin-left:auto;font-family:var(--mono)">NEW</span>
+    </div>
+
+    <hr class="drawer-divider"/>
+
+    <!-- DATA -->
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">💾 Data</div>
+    <div class="drawer-menu-item" onclick="window.print();closeDrawer()">
+      <i class="fa-solid fa-print"></i> Cetak / Print
+    </div>
+    <div class="drawer-menu-item" onclick="exportJSON();closeDrawer()">
+      <i class="fa-solid fa-file-arrow-down"></i> Backup Data (.json)
+    </div>
+    <div class="drawer-menu-item" onclick="document.getElementById('import-json-input').click()">
+      <i class="fa-solid fa-file-arrow-up"></i> Pulihkan Data (.json)
+    </div>
+    <input type="file" id="import-json-input" accept=".json" style="display:none" onchange="importJSON(event)"/>
+
+    <hr class="drawer-divider"/>
+
+    <!-- TENTANG & LISENSI -->
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">🏢 HFZ Company Office</div>
+    <div class="drawer-menu-item" onclick="showLicenseModal();closeDrawer()">
+      <i class="fa-solid fa-certificate"></i> Lisensi Produk
+    </div>
+    <div class="drawer-menu-item" onclick="showAboutModal();closeDrawer()">
+      <i class="fa-solid fa-circle-info"></i> Tentang Aplikasi
+    </div>
+
+    <hr class="drawer-divider"/>
+    <div class="drawer-menu-item" onclick="if(confirm('Reset semua data split bill?')){resetAll();closeDrawer();}">
+      <i class="fa-solid fa-rotate-left" style="color:var(--accent)"></i>
+      <span style="color:var(--accent)">Reset Split Bill</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════════════════ -->
+<div class="main-content">
+<div class="wrapper">
+
+  <!-- ======== VIEW: SPLIT BILL ======== -->
+  <div id="view-splitbill">
+
+    <header>
+      <div class="logo"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+      <h1>Split<span>Bill</span></h1>
+      <p>Hitung patungan · simpan catatan · unduh bukti deal.</p>
+    </header>
+
+    <!-- progress -->
+    <div class="progress-bar">
+      <div class="prog-dot active" id="pd-1"></div>
+      <div class="prog-dot" id="pd-2"></div>
+      <div class="prog-dot" id="pd-3"></div>
+      <div class="prog-dot" id="pd-4"></div>
+    </div>
+
+    <!-- steps -->
+    <div class="steps-bar">
+      <div class="step-item active" id="si-1" onclick="goStep(1)">
+        <div class="step-circle"><i class="fa-solid fa-sliders" style="font-size:10px"></i></div>
+        <div class="step-label">Setup</div>
+      </div>
+      <div class="step-item" id="si-2" onclick="goStep(2)">
+        <div class="step-circle">2</div>
+        <div class="step-label">Item</div>
+      </div>
+      <div class="step-item" id="si-3" onclick="goStep(3)">
+        <div class="step-circle">3</div>
+        <div class="step-label">Hasil</div>
+      </div>
+      <div class="step-item" id="si-4" onclick="goStep(4)">
+        <div class="step-circle"><i class="fa-solid fa-pen-nib" style="font-size:10px"></i></div>
+        <div class="step-label">Catatan</div>
+      </div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="panel active" id="panel-1">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-sliders"></i> Pengaturan Dasar</div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <div class="field-label">Nama Acara / Trip</div>
+            <input id="event-name" type="text" class="field-input" placeholder="cth: Camping Dieng 2025" maxlength="60"/>
+          </div>
+          <div class="field">
+            <div class="field-label">Mata Uang</div>
+            <div class="sel-wrap">
+              <select id="currency" class="field-select" onchange="handleCurrency()">
+                <option value="IDR">🇮🇩 Rupiah (IDR)</option>
+                <option value="USD">🇺🇸 US Dollar (USD)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <div class="field-label">Jumlah Orang</div>
+            <input id="people" type="number" class="field-input" value="2" min="1" placeholder="cth: 8"/>
+          </div>
+          <div class="field">
+            <div class="field-label">Tanggal Acara</div>
+            <input id="event-date" type="date" class="field-input"/>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="goStep(2)">
+            Lanjut: Tambah Item <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="panel" id="panel-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <i class="fa-solid fa-list-check"></i> Daftar Pengeluaran
+            <span class="badge" id="item-badge">0</span>
+          </div>
+        </div>
+        <div class="add-grid">
+          <div class="field">
+            <div class="field-label">Nama Item</div>
+            <input id="in-name" type="text" class="field-input" placeholder="Tenda, BBQ, Bensin…" maxlength="50"/>
+          </div>
+          <div class="field">
+            <div class="field-label">Harga Satuan</div>
+            <div class="pfx-wrap">
+              <span class="pfx" id="pfx">Rp</span>
+              <input id="in-price" type="text" class="field-input pfx-input" placeholder="0" inputmode="numeric"/>
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-label">Jumlah</div>
+            <input id="in-qty" type="number" class="field-input" placeholder="1" min="1" value="1"/>
+          </div>
+          <div class="field span2">
+            <div class="field-label" style="visibility:hidden">x</div>
+            <button class="btn btn-primary" onclick="addItem()" style="width:100%">
+              <i class="fa-solid fa-plus"></i> Tambah
+            </button>
+          </div>
+        </div>
+
+        <div class="items-list" id="items-list">
+          <div class="empty">
+            <i class="fa-regular fa-rectangle-list"></i>
+            Belum ada item. Tambahkan pengeluaran!
+          </div>
+        </div>
+
+        <div class="total-bar">
+          <div class="tb-label">Total Keseluruhan</div>
+          <div class="tb-value" id="tb-total">Rp 0</div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="goStep(1)"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+          <button class="btn btn-primary" onclick="goStep(3)">Lihat Hasil <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="panel" id="panel-3">
+      <div class="res-hero">
+        <div class="rh-label">💸 Bayar Per Orang</div>
+        <div class="rh-amount" id="rh-amount">Rp 0</div>
+        <div class="rh-sub" id="rh-sub">— ÷ — orang</div>
+      </div>
+      <div class="res-grid">
+        <div class="res-stat"><div class="rs-label">Total Biaya</div><div class="rs-value" id="rs-total">Rp 0</div></div>
+        <div class="res-stat"><div class="rs-label">Jumlah Item</div><div class="rs-value" id="rs-items">0</div></div>
+        <div class="res-stat"><div class="rs-label">Jumlah Orang</div><div class="rs-value" id="rs-people">—</div></div>
+        <div class="res-stat"><div class="rs-label">Nama Acara</div><div class="rs-value" id="rs-event" style="font-size:12px;word-break:break-word">—</div></div>
+      </div>
+      <div class="card" style="padding:18px;">
+        <div class="card-title" style="margin-bottom:12px;"><i class="fa-solid fa-receipt"></i> Rincian Item</div>
+        <div id="res-breakdown"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goStep(2)"><i class="fa-solid fa-arrow-left"></i> Edit</button>
+        <button class="btn btn-warn" onclick="saveTxFromResult()" title="Simpan ke riwayat">
+          <i class="fa-solid fa-bookmark"></i> Simpan ke Riwayat
+        </button>
+        <button class="btn btn-green" onclick="goStep(4)">
+          <i class="fa-solid fa-pen-nib"></i> Buat Catatan
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="panel" id="panel-4">
+      <!-- NOTES PAPER -->
+      <div class="notes-paper" id="notes-paper-el">
+        <div class="note-inner">
+          <input id="note-title" type="text" class="notes-title-input"
+            placeholder="Judul Catatan… (cth: Deal Camping Dieng)" maxlength="80"/>
+          <textarea id="note-body" class="notes-textarea"
+            placeholder="Tulis catatan kesepakatan di sini…&#10;&#10;Misal:&#10;- Transfer ke BCA 1234-5678 a.n. Budi&#10;- Deadline bayar: H-7 sebelum acara&#10;- Yang telat kena denda Rp 50.000"></textarea>
+          <div class="notes-meta">
+            <span id="note-date-label"></span>
+            <span id="note-char">0 karakter</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="deal-actions">
+        <button class="btn btn-secondary" onclick="goStep(3)"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+        <button class="btn btn-secondary" onclick="openReceipt()"><i class="fa-solid fa-eye"></i> Preview</button>
+        <button class="btn btn-green" onclick="downloadPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+        <button class="btn btn-accent" onclick="downloadJPG()"><i class="fa-solid fa-image"></i> JPG</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="window.print()"><i class="fa-solid fa-print"></i> Cetak / Print</button>
+        <button class="btn btn-ghost" onclick="resetAll()"><i class="fa-solid fa-rotate-left"></i> Mulai Ulang</button>
+      </div>
+    </div>
+
+  </div><!-- end view-splitbill -->
+
+
+  <!-- ======== VIEW: RIWAYAT TRANSAKSI ======== -->
+  <div id="view-riwayat" style="display:none;">
+
+    <header>
+      <div class="logo" style="background:var(--accent2)"><i class="fa-solid fa-clock-rotate-left" style="color:#fff;font-size:22px"></i></div>
+      <h1 style="font-size:clamp(24px,5vw,36px)">Riwayat <span>Transaksi</span></h1>
+      <p>Catat tiap transaksi sebelum masuk ke Split Bill.</p>
+    </header>
+
+    <!-- Add Transaction Form -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fa-solid fa-plus-circle"></i> Tambah Transaksi Baru</div>
+      </div>
+
+      <!-- Photo upload -->
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('photo-input').click()">
+        <input type="file" id="photo-input" accept="image/*" onchange="handlePhoto(event)"/>
+        <i class="fa-solid fa-camera"></i>
+        <p><strong>Upload / Foto Struk</strong></p>
+        <p style="font-size:11px;margin-top:3px;">Tap untuk ambil foto atau pilih dari galeri</p>
+      </div>
+      <div class="photo-preview" id="photo-preview" style="display:none;">
+        <img id="photo-img" src="" alt="Struk"/>
+        <button class="photo-remove" onclick="removePhoto()">✕ Hapus Foto</button>
+      </div>
+
+      <div class="tx-form">
+        <div class="tx-form-title">Detail Transaksi</div>
+        <div class="row2">
+          <div class="field">
+            <div class="field-label">Nama / Keterangan</div>
+            <input id="tx-name" type="text" class="field-input" placeholder="cth: Makan Siang, Bensin" maxlength="60"/>
+          </div>
+          <div class="field">
+            <div class="field-label">Jumlah (Total)</div>
+            <div class="pfx-wrap">
+              <span class="pfx" id="tx-pfx">Rp</span>
+              <input id="tx-amount" type="text" class="field-input pfx-input" placeholder="0" inputmode="numeric"/>
+            </div>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <div class="field-label">Tanggal</div>
+            <input id="tx-date" type="date" class="field-input"/>
+          </div>
+          <div class="field">
+            <div class="field-label">Dibayar Oleh</div>
+            <input id="tx-payer" type="text" class="field-input" placeholder="cth: Budi" maxlength="40"/>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Catatan (opsional)</div>
+          <input id="tx-note" type="text" class="field-input" placeholder="cth: Untuk 5 orang, termasuk parkir" maxlength="100"/>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+          <button class="btn btn-green" onclick="addTransaction()" style="flex:1">
+            <i class="fa-solid fa-plus"></i> Simpan Transaksi
+          </button>
+          <button class="btn btn-secondary" onclick="importTxToSplitBill()" title="Import semua ke Split Bill">
+            <i class="fa-solid fa-file-import"></i> Import ke Split Bill
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transaction List -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="fa-solid fa-list"></i> Daftar Transaksi
+          <span class="badge" id="tx-list-badge">0</span>
+        </div>
+      </div>
+      <div id="tx-list">
+        <div class="tx-empty">
+          <i class="fa-solid fa-receipt"></i>
+          Belum ada transaksi.<br/>Tambahkan transaksi di atas!
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="total-bar" style="margin-top:14px;">
+        <div class="tb-label">Total Semua Transaksi</div>
+        <div class="tb-value" id="tx-total-display">Rp 0</div>
+      </div>
+    </div>
+
+  </div><!-- end view-riwayat -->
+
+
+  <!-- ======== VIEW: STATISTIK ======== -->
+  <div id="view-stats" style="display:none;">
+    <header>
+      <div class="logo" style="background:var(--warn)"><i class="fa-solid fa-chart-pie" style="color:#fff;font-size:22px"></i></div>
+      <h1 style="font-size:clamp(22px,5vw,34px)">Statistik <span>&amp; Analisis</span></h1>
+      <p>Ringkasan data dari semua sesi kamu.</p>
+    </header>
+
+    <div class="res-grid" id="stats-overview"></div>
+
+    <div class="card" style="padding:20px;">
+      <div class="card-title" style="margin-bottom:16px;"><i class="fa-solid fa-chart-bar"></i> Distribusi Pengeluaran</div>
+      <div id="stats-chart-wrap" style="position:relative;height:180px;margin-bottom:8px;">
+        <canvas id="stats-bar-canvas" style="width:100%;height:180px;"></canvas>
+      </div>
+      <div id="stats-items-list" style="display:flex;flex-direction:column;gap:6px;margin-top:14px;"></div>
+    </div>
+
+    <div class="card" style="padding:20px;">
+      <div class="card-title" style="margin-bottom:12px;"><i class="fa-solid fa-lightbulb"></i> Insight Cerdas</div>
+      <div id="stats-insights" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="switchView('splitbill')">
+        <i class="fa-solid fa-arrow-left"></i> Kembali ke Split Bill
+      </button>
+    </div>
+  </div><!-- end view-stats -->
+
+  <!-- HFZ FOOTER BRAND -->
+  <div class="hfz-footer">
+    <div class="hfz-badge">
+      <i class="fa-solid fa-building"></i> HFZ COMPANY OFFICE
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:8px;font-family:var(--mono);">
+      SplitBill v3.0 · Licensed Product · All Rights Reserved
+    </div>
+  </div>
+
+</div><!-- end wrapper -->
+</div><!-- end main-content -->
+
+<!-- ══════ LICENSE MODAL ══════ -->
+<div class="modal-overlay" id="license-modal" onclick="if(event.target===this)closeLicense()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>// LISENSI PRODUK</h2>
+      <button class="modal-close" onclick="closeLicense()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="license-card">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">SERTIFIKAT LISENSI PERANGKAT LUNAK</div>
+        <div style="font-family:var(--sans);font-size:22px;font-weight:800;letter-spacing:-1px;margin-bottom:4px;">SplitBill™</div>
+        <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:14px;">Kalkulator Patungan Profesional v3.0</div>
+        <div class="license-divider"></div>
+        <div style="font-size:11px;line-height:2;">
+          <b>Pemegang Lisensi</b><br/>
+          <span style="font-size:14px;font-weight:700;color:var(--ink);">HFZ Company Office</span><br/><br/>
+          <b>Jenis Lisensi</b> &nbsp;: Proprietary License<br/>
+          <b>Versi Produk</b> &nbsp;: 3.0 (Stable Release)<br/>
+          <b>Platform</b> &nbsp;&nbsp;&nbsp;&nbsp;: Web Application (PWA-Ready)<br/>
+          <b>Tanggal Rilis</b> : <span id="lic-date"></span><br/>
+          <b>Berlaku s/d</b> &nbsp;: Tidak Terbatas (Perpetual)<br/>
+        </div>
+        <div class="license-divider"></div>
+        <div style="font-size:10px;color:var(--muted);line-height:1.7;font-family:var(--mono);">
+          Perangkat lunak ini adalah milik eksklusif HFZ Company Office.<br/>
+          Dilarang mendistribusikan, menjual, atau mengklaim kepemilikan<br/>
+          tanpa izin tertulis dari pemegang lisensi.<br/>
+          © 2025–2026 HFZ Company Office. All Rights Reserved.
+        </div>
+        <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:gap;">
+          <div>
+            <div class="license-sig">HFZ Company</div>
+            <div style="font-size:10px;color:var(--muted);font-family:var(--mono);border-top:1.5px solid var(--line);padding-top:4px;margin-top:4px;">Authorized Signature</div>
+          </div>
+          <div class="license-stamp"><i class="fa-solid fa-check-double"></i> VERIFIED</div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:14px;">
+        <button class="btn btn-primary" onclick="closeLicense()" style="width:100%">
+          <i class="fa-solid fa-check"></i> Saya Mengerti
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ ABOUT MODAL ══════ -->
+<div class="modal-overlay" id="about-modal" onclick="if(event.target===this)closeAbout()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>// TENTANG APLIKASI</h2>
+      <button class="modal-close" onclick="closeAbout()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div class="logo" style="margin:0 auto 12px;width:64px;height:64px;border-radius:18px;box-shadow:5px 5px 0 var(--accent);">
+          <i class="fa-solid fa-file-invoice-dollar" style="font-size:28px;"></i>
+        </div>
+        <div style="font-family:var(--sans);font-size:26px;font-weight:800;letter-spacing:-1px;">Split<span style="color:var(--accent)">Bill</span></div>
+        <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:4px;">Version 3.0 · HFZ Company Office</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;">
+        <div style="background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r-sm);padding:12px;">
+          <b style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Tentang</b><br/>
+          <span style="line-height:1.7;">Aplikasi kalkulator patungan modern dengan fitur lengkap: riwayat transaksi dengan foto struk, ekspor PDF &amp; JPG, catatan deal, dan banyak lagi.</span>
+        </div>
+        <div style="background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r-sm);padding:12px;">
+          <b style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Fitur Unggulan</b>
+          <ul style="list-style:none;line-height:2;margin-top:6px;">
+            <li>✅ Step-by-step wizard</li>
+            <li>✅ Riwayat transaksi + foto struk</li>
+            <li>✅ Export PDF (warna) + JPG HD</li>
+            <li>✅ Catatan deal bergaya kertas</li>
+            <li>✅ Statistik &amp; insight otomatis</li>
+            <li>✅ Split kustom per persentase</li>
+            <li>✅ Countdown deadline bayar</li>
+            <li>✅ Konversi IDR ↔ USD real-time</li>
+            <li>✅ Backup &amp; restore data (.json)</li>
+            <li>✅ Bagikan ke WhatsApp</li>
+            <li>✅ 4 tema warna</li>
+            <li>✅ Berjalan 100% offline</li>
+          </ul>
+        </div>
+        <div style="background:var(--ink);color:var(--paper);border-radius:var(--r-sm);padding:12px;font-family:var(--mono);font-size:11px;line-height:1.8;text-align:center;">
+          © 2025–2026 HFZ Company Office<br/>
+          All Rights Reserved · Proprietary Software
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="closeAbout()" style="width:100%;margin-top:14px;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ THEME PICKER MODAL ══════ -->
+<div class="modal-overlay" id="theme-modal" onclick="if(event.target===this)closeTheme()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>// TEMA WARNA</h2>
+      <button class="modal-close" onclick="closeTheme()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Pilih tema warna yang kamu suka. Perubahan langsung diterapkan.</p>
+      <div class="theme-grid">
+        <div class="theme-btn active" id="theme-warm" onclick="applyTheme('warm')">
+          <div class="tc" style="background:linear-gradient(135deg,#e85d2f,#faf7f2)"></div>
+          Warm Paper
+        </div>
+        <div class="theme-btn" id="theme-dark" onclick="applyTheme('dark')">
+          <div class="tc" style="background:linear-gradient(135deg,#4ade80,#0d0f14)"></div>
+          Dark Mode
+        </div>
+        <div class="theme-btn" id="theme-ocean" onclick="applyTheme('ocean')">
+          <div class="tc" style="background:linear-gradient(135deg,#22d3ee,#0a1628)"></div>
+          Ocean Night
+        </div>
+        <div class="theme-btn" id="theme-forest" onclick="applyTheme('forest')">
+          <div class="tc" style="background:linear-gradient(135deg,#2b7a4b,#f0f7f2)"></div>
+          Forest
+        </div>
+        <div class="theme-btn" id="theme-purple" onclick="applyTheme('purple')">
+          <div class="tc" style="background:linear-gradient(135deg,#a855f7,#1a0a2e)"></div>
+          Purple Haze
+        </div>
+        <div class="theme-btn" id="theme-gold" onclick="applyTheme('gold')">
+          <div class="tc" style="background:linear-gradient(135deg,#c4820a,#1a1400)"></div>
+          Gold Rush
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="closeTheme()" style="width:100%;margin-top:16px;">Terapkan &amp; Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ COUNTDOWN MODAL ══════ -->
+<div class="modal-overlay" id="countdown-modal" onclick="if(event.target===this)closeCountdown()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>// COUNTDOWN DEADLINE</h2>
+      <button class="modal-close" onclick="closeCountdown()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <div class="field-label">Tanggal Deadline Bayar</div>
+        <input id="cd-date" type="date" class="field-input" oninput="updateCountdown()"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Label (opsional)</div>
+        <input id="cd-label" type="text" class="field-input" placeholder="cth: Deadline transfer ke Budi" maxlength="60" oninput="updateCountdown()"/>
+      </div>
+      <div class="countdown-display" id="countdown-display">
+        <div class="cd-label">WAKTU TERSISA</div>
+        <div class="cd-segments">
+          <div class="cd-seg"><div class="cs-val" id="cd-days">--</div><div class="cs-lbl">Hari</div></div>
+          <div class="cd-seg"><div class="cs-val" id="cd-hours">--</div><div class="cs-lbl">Jam</div></div>
+          <div class="cd-seg"><div class="cs-val" id="cd-mins">--</div><div class="cs-lbl">Menit</div></div>
+        </div>
+        <div class="cd-sub" id="cd-msg">Pilih tanggal deadline di atas</div>
+      </div>
+      <button class="btn btn-secondary" onclick="closeCountdown()" style="width:100%;margin-top:8px;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ CONVERTER MODAL ══════ -->
+<div class="modal-overlay" id="converter-modal" onclick="if(event.target===this)closeConverter()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>// KONVERSI MATA UANG</h2>
+      <button class="modal-close" onclick="closeConverter()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:14px;">
+        ⚠️ Kurs estimasi. Untuk akurasi penuh cek kurs terkini.
+      </p>
+      <div class="row2">
+        <div class="field">
+          <div class="field-label">Jumlah</div>
+          <input id="conv-amount" type="number" class="field-input" placeholder="1000000" oninput="doConvert()"/>
+        </div>
+        <div class="field">
+          <div class="field-label">Dari</div>
+          <div class="sel-wrap">
+            <select id="conv-from" class="field-select" onchange="doConvert()">
+              <option value="IDR">🇮🇩 IDR</option>
+              <option value="USD">🇺🇸 USD</option>
+              <option value="MYR">🇲🇾 MYR</option>
+              <option value="SGD">🇸🇬 SGD</option>
+              <option value="EUR">🇪🇺 EUR</option>
+              <option value="JPY">🇯🇵 JPY</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Ke</div>
+          <div class="sel-wrap">
+            <select id="conv-to" class="field-select" onchange="doConvert()">
+              <option value="USD">🇺🇸 USD</option>
+              <option value="IDR">🇮🇩 IDR</option>
+              <option value="MYR">🇲🇾 MYR</option>
+              <option value="SGD">🇸🇬 SGD</option>
+              <option value="EUR">🇪🇺 EUR</option>
+              <option value="JPY">🇯🇵 JPY</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-end;padding-bottom:12px;">
+          <button class="btn btn-primary" onclick="swapConv()" style="width:100%;padding:10px;" title="Tukar">
+            <i class="fa-solid fa-arrows-rotate"></i> Tukar
+          </button>
+        </div>
+      </div>
+      <div class="conv-result" id="conv-result">Masukkan jumlah di atas</div>
+      <div class="conv-rate-info" id="conv-rate-info"></div>
+      <button class="btn btn-secondary" onclick="closeConverter()" style="width:100%;margin-top:14px;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SPLIT MODE MODAL ══════ -->
+<div class="modal-overlay" id="splitmode-modal" onclick="if(event.target===this)closeSplitMode()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>// MODE SPLIT KUSTOM</h2>
+      <button class="modal-close" onclick="closeSplitMode()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="split-mode-row">
+        <div class="split-mode-btn active" id="smode-equal" onclick="setSplitMode('equal')">
+          <i class="fa-solid fa-equals"></i> Rata
+        </div>
+        <div class="split-mode-btn" id="smode-custom" onclick="setSplitMode('custom')">
+          <i class="fa-solid fa-percent"></i> Custom %
+        </div>
+        <div class="split-mode-btn" id="smode-shares" onclick="setSplitMode('shares')">
+          <i class="fa-solid fa-layer-group"></i> Per Saham
+        </div>
+      </div>
+      <div id="split-equal-info" style="font-size:13px;text-align:center;padding:20px 0;color:var(--muted);">
+        Biaya dibagi rata ke semua orang. Aktif secara default.
+      </div>
+      <div id="split-custom-panel" style="display:none;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-family:var(--mono);">
+          Atur persentase untuk setiap orang. Total harus = 100%.
+        </div>
+        <div id="custom-names-form" style="margin-bottom:10px;"></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary" onclick="addCustomPerson()" style="flex:1;font-size:12px;">
+            <i class="fa-solid fa-plus"></i> Tambah Orang
+          </button>
+          <button class="btn btn-green" onclick="calcCustomSplit()" style="flex:1;font-size:12px;">
+            <i class="fa-solid fa-calculator"></i> Hitung
+          </button>
+        </div>
+        <div id="custom-split-result" style="margin-top:12px;"></div>
+      </div>
+      <div id="split-shares-panel" style="display:none;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-family:var(--mono);">
+          Bagi berdasarkan jumlah "saham". Misal: 1 saham = 1 porsi.
+        </div>
+        <div id="shares-form" style="margin-bottom:10px;"></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary" onclick="addSharePerson()" style="flex:1;font-size:12px;">
+            <i class="fa-solid fa-plus"></i> Tambah Orang
+          </button>
+          <button class="btn btn-green" onclick="calcSharesSplit()" style="flex:1;font-size:12px;">
+            <i class="fa-solid fa-calculator"></i> Hitung
+          </button>
+        </div>
+        <div id="shares-split-result" style="margin-top:12px;"></div>
+      </div>
+      <button class="btn btn-secondary" onclick="closeSplitMode()" style="width:100%;margin-top:14px;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SHARE PANEL MODAL ══════ -->
+<div class="modal-overlay" id="share-modal" onclick="if(event.target===this)closeSharePanel()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>// BAGIKAN HASIL</h2>
+      <button class="modal-close" onclick="closeSharePanel()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="share-card" id="share-preview-card">
+        <div class="sc-title" id="sc-ev-name">Split Bill</div>
+        <div class="sc-sub" id="sc-ev-date">—</div>
+        <div class="sc-amount" id="sc-per-person">Rp 0</div>
+        <div style="font-size:11px;opacity:.4;font-family:var(--mono);">per orang · HFZ Company Office</div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-family:var(--mono);">Pilih cara berbagi:</div>
+      <div class="share-platforms">
+        <button class="share-btn share-wa" onclick="shareWA()">
+          <i class="fa-brands fa-whatsapp"></i> WhatsApp
+        </button>
+        <button class="share-btn share-copy" onclick="copyShareText()">
+          <i class="fa-solid fa-copy"></i> Salin Teks
+        </button>
+        <button class="share-btn share-dl" onclick="downloadJPG();closeSharePanel()">
+          <i class="fa-solid fa-image"></i> Unduh JPG
+        </button>
+      </div>
+      <div id="share-text-preview" style="margin-top:14px;background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r-sm);padding:12px;font-family:var(--mono);font-size:11px;white-space:pre-wrap;max-height:150px;overflow-y:auto;color:var(--ink2);">
+      </div>
+      <button class="btn btn-secondary" onclick="closeSharePanel()" style="width:100%;margin-top:12px;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ QR CODE MODAL ══════ -->
+<div class="modal-overlay" id="qr-modal" onclick="if(event.target===this)closeQRModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>// QR CODE TAGIHAN</h2>
+      <button class="modal-close" onclick="closeQRModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="qr-card">
+        <div class="qr-title" id="qr-ev-name">Split Bill</div>
+        <div class="qr-sub" id="qr-ev-date">—</div>
+        <div class="qr-box">
+          <div id="qr-canvas-wrap" style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;"></div>
+        </div>
+        <div class="qr-amount" id="qr-amount">Rp 0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.4);font-family:var(--mono);">per orang</div>
+        <div class="qr-info-row">
+          <div class="qr-info-item"><b id="qr-total">Rp 0</b>Total</div>
+          <div class="qr-info-item"><b id="qr-people">—</b>Orang</div>
+          <div class="qr-info-item"><b id="qr-items">—</b>Item</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);font-family:var(--mono);text-align:center;margin-bottom:12px;">
+        Scan QR untuk melihat ringkasan tagihan.<br/>Atau tempel di grup WA / broadcast.
+      </div>
+      <!-- Custom QR text input -->
+      <div class="field">
+        <div class="field-label">Teks / Link di QR (opsional)</div>
+        <input id="qr-custom-text" type="text" class="field-input"
+          placeholder="cth: https://bayar.me/budi atau nomor rekening"
+          oninput="regenerateQR()"/>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-green" onclick="downloadQR()" style="flex:1;">
+          <i class="fa-solid fa-download"></i> Unduh QR (PNG)
+        </button>
+        <button class="btn btn-secondary" onclick="closeQRModal()" style="flex:1;">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PAYMENT TRACKER MODAL ══════ -->
+<div class="modal-overlay" id="paytrack-modal" onclick="if(event.target===this)closePayTracker()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>// LACAK PEMBAYARAN</h2>
+      <button class="modal-close" onclick="closePayTracker()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:12px;">
+        Tandai siapa saja yang sudah bayar. Tap nama untuk toggle status.
+      </div>
+      <!-- Progress -->
+      <div id="pay-progress-wrap" style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+          <span style="font-weight:700;color:var(--ink)">Progress Pembayaran</span>
+          <span id="pay-progress-text" style="font-family:var(--mono);color:var(--accent2)">0 / 0 orang</span>
+        </div>
+        <div class="pay-progress-bar">
+          <div class="pay-progress-fill" id="pay-progress-fill" style="width:0%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:var(--mono);">
+          <span id="pay-collected">Terkumpul: Rp 0</span>
+          <span id="pay-remaining">Sisa: Rp 0</span>
+        </div>
+      </div>
+      <!-- Name input -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input id="pay-name-input" type="text" class="field-input"
+          placeholder="Tambah nama peserta…" maxlength="30"
+          style="flex:1;font-size:13px;padding:9px 12px;"
+          onkeydown="if(event.key==='Enter')addPayPerson()"/>
+        <button class="btn btn-primary" onclick="addPayPerson()" style="padding:9px 16px;font-size:13px;">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
+      <!-- List -->
+      <div id="pay-persons-list"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn btn-secondary" onclick="resetPayTracker()" style="flex:1;font-size:12px;">
+          <i class="fa-solid fa-rotate-left"></i> Reset
+        </button>
+        <button class="btn btn-secondary" onclick="closePayTracker()" style="flex:1;font-size:12px;">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ TIP CALCULATOR MODAL ══════ -->
+<div class="modal-overlay" id="tip-modal" onclick="if(event.target===this)closeTipCalc()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>// KALKULATOR TIP</h2>
+      <button class="modal-close" onclick="closeTipCalc()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="row2">
+        <div class="field">
+          <div class="field-label">Total Tagihan</div>
+          <div class="pfx-wrap">
+            <span class="pfx" id="tip-pfx">Rp</span>
+            <input id="tip-bill" type="number" class="field-input pfx-input"
+              placeholder="0" oninput="calcTip()"/>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Jumlah Orang</div>
+          <input id="tip-people" type="number" class="field-input"
+            value="2" min="1" oninput="calcTip()"/>
+        </div>
+      </div>
+      <div class="field-label" style="margin-bottom:8px;">Persentase Tip</div>
+      <div class="tip-grid">
+        <div class="tip-btn" id="tip-5" onclick="selectTip(5)">5%</div>
+        <div class="tip-btn active" id="tip-10" onclick="selectTip(10)">10%</div>
+        <div class="tip-btn" id="tip-15" onclick="selectTip(15)">15%</div>
+        <div class="tip-btn" id="tip-20" onclick="selectTip(20)">20%</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Atau ketik % manual</div>
+        <input id="tip-custom-pct" type="number" class="field-input"
+          placeholder="cth: 12" min="0" max="100" oninput="selectTip(null)"/>
+      </div>
+      <div class="tip-result" id="tip-result">
+        <div class="tip-stat"><div class="tv" id="tip-amount">Rp 0</div><div class="tl">Jumlah Tip</div></div>
+        <div class="tip-stat"><div class="tv" id="tip-total-with">Rp 0</div><div class="tl">Total + Tip</div></div>
+        <div class="tip-stat"><div class="tv" id="tip-per-person">Rp 0</div><div class="tl">Per Orang</div></div>
+        <div class="tip-stat"><div class="tv" id="tip-tip-per">Rp 0</div><div class="tl">Tip/Orang</div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn btn-green" onclick="importTipToSplitBill()" style="flex:1;font-size:12px;">
+          <i class="fa-solid fa-file-import"></i> Import ke Split Bill
+        </button>
+        <button class="btn btn-secondary" onclick="closeTipCalc()" style="flex:1;font-size:12px;">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ EXPENSE CHART MODAL ══════ -->
+<div class="modal-overlay" id="expense-chart-modal" onclick="if(event.target===this)closeExpenseChart()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>// GRAFIK PENGELUARAN</h2>
+      <button class="modal-close" onclick="closeExpenseChart()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <canvas id="expense-chart-canvas" height="220"></canvas>
+      <div class="chart-legend" id="expense-chart-legend"></div>
+      <div id="expense-chart-stats" style="margin-top:14px;display:flex;flex-direction:column;gap:6px;"></div>
+      <button class="btn btn-secondary" onclick="closeExpenseChart()" style="width:100%;margin-top:12px;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ LOAN TRACKER MODAL ══════ -->
+<div class="modal-overlay" id="loan-modal" onclick="if(event.target===this)closeLoanTracker()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>// HUTANG &amp; PIUTANG</h2>
+      <button class="modal-close" onclick="closeLoanTracker()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:11px;color:var(--muted);margin-bottom:14px;font-family:var(--mono);">
+        Catat siapa yang berhutang (kamu bayarin dulu) atau piutang (kamu yang belum bayar).
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div class="field">
+          <div class="field-label">Nama Orang</div>
+          <input id="loan-name" type="text" class="field-input" placeholder="cth: Budi" maxlength="30" style="font-size:13px;padding:9px 11px;"/>
+        </div>
+        <div class="field">
+          <div class="field-label">Jumlah</div>
+          <div class="pfx-wrap">
+            <span class="pfx" id="loan-pfx">Rp</span>
+            <input id="loan-amount" type="number" class="field-input pfx-input" placeholder="0" min="0" style="font-size:13px;padding:9px 11px 9px 30px;"/>
+          </div>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <div class="field-label">Keterangan (opsional)</div>
+        <input id="loan-note" type="text" class="field-input" placeholder="cth: Bayar makan siang" maxlength="60" style="font-size:13px;padding:9px 11px;"/>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="btn btn-accent" onclick="addLoan('hutang')" style="flex:1;font-size:12px;padding:10px;">
+          <i class="fa-solid fa-arrow-up"></i> Hutang (kamu diutangi)
+        </button>
+        <button class="btn btn-green" onclick="addLoan('piutang')" style="flex:1;font-size:12px;padding:10px;">
+          <i class="fa-solid fa-arrow-down"></i> Piutang (kamu yang hutang)
+        </button>
+      </div>
+      <!-- Summary -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div class="res-stat"><div class="rs-label">💸 Kamu Diutangi</div><div class="rs-value" id="loan-total-hutang" style="font-size:15px;color:var(--accent);">Rp 0</div></div>
+        <div class="res-stat"><div class="rs-label">💳 Kamu Berhutang</div><div class="rs-value" id="loan-total-piutang" style="font-size:15px;color:var(--accent2);">Rp 0</div></div>
+      </div>
+      <div id="loan-list"></div>
+      <button class="btn btn-secondary" onclick="closeLoanTracker()" style="width:100%;margin-top:10px;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ QUICK MEMO MODAL ══════ -->
+<div class="modal-overlay" id="memo-modal" onclick="if(event.target===this)closeQuickMemo()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>// QUICK MEMO</h2>
+      <button class="modal-close" onclick="closeQuickMemo()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="memo-paper" style="margin-bottom:10px;">
+        <textarea id="memo-input" class="memo-textarea" placeholder="Tulis memo singkat… (Enter untuk simpan, atau klik Simpan)"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="btn btn-primary" onclick="saveMemo()" style="flex:1;font-size:13px;">
+          <i class="fa-solid fa-floppy-disk"></i> Simpan Memo
+        </button>
+        <button class="btn btn-secondary" onclick="clearMemoInput()" style="padding:11px 14px;font-size:13px;">
+          <i class="fa-solid fa-eraser"></i>
+        </button>
+      </div>
+      <div class="field-label" style="margin-bottom:8px;">Memo Tersimpan</div>
+      <div id="memo-list"><div style="color:var(--muted);font-size:12px;text-align:center;padding:16px;">Belum ada memo.</div></div>
+      <button class="btn btn-secondary" onclick="closeQuickMemo()" style="width:100%;margin-top:12px;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ BUDGET PLANNER MODAL ══════ -->
+<div class="modal-overlay" id="budget-modal" onclick="if(event.target===this)closeBudgetPlanner()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>// BUDGET PLANNER</h2>
+      <button class="modal-close" onclick="closeBudgetPlanner()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:11px;color:var(--muted);margin-bottom:14px;font-family:var(--mono);">
+        Tentukan budget per kategori dan bandingkan dengan pengeluaran aktual.
+      </p>
+      <div class="field">
+        <div class="field-label">Total Budget Acara</div>
+        <div class="pfx-wrap">
+          <span class="pfx" id="budget-pfx">Rp</span>
+          <input id="budget-total" type="number" class="field-input pfx-input"
+            placeholder="0" min="0" oninput="renderBudgetAnalysis()"/>
+        </div>
+      </div>
+      <div id="budget-categories" style="margin:14px 0;"></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <input id="budget-cat-name" type="text" class="field-input" placeholder="Nama kategori…" maxlength="30" style="font-size:13px;padding:9px 11px;"/>
+        <button class="btn btn-primary" onclick="addBudgetCat()" style="padding:10px 16px;font-size:13px;">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
+      <div id="budget-analysis"></div>
+      <button class="btn btn-secondary" onclick="closeBudgetPlanner()" style="width:100%;margin-top:12px;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ RECEIPT MODAL ══════ -->
+<div id="receipt-modal">
+  <div class="receipt-wrap">
+    <div class="receipt-top">
+      <h2>// PREVIEW CATATAN</h2>
+      <button onclick="closeReceipt()"
+        style="background:transparent;border:none;cursor:pointer;color:#fff;font-size:16px;padding:2px 6px;">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="receipt-body" id="receipt-content"></div>
+    <div class="receipt-footer">
+      <button class="btn btn-secondary" onclick="closeReceipt()">Tutup</button>
+      <button class="btn btn-green" onclick="downloadPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+      <button class="btn btn-accent" onclick="downloadJPG()"><i class="fa-solid fa-image"></i> JPG</button>
+    </div>
+  </div>
+</div>
+
+<!-- hidden canvas for JPG export -->
+<canvas id="export-canvas"></canvas>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+/* =====================================================
+   STATE
+===================================================== */
+let items    = [];
+let nextId   = 1;
+let currency = 'IDR';
+let step     = 1;
+let transactions = [];   // riwayat transaksi
+let txNextId = 1;
+let currentPhotoData = null; // base64
+
+/* =====================================================
+   INIT
+===================================================== */
+(function init(){
+  const s = localStorage.getItem('sb4_data');
+  if(s){
+    try{
+      const d = JSON.parse(s);
+      items        = d.items    || [];
+      nextId       = d.nextId   || 1;
+      currency     = d.currency || 'IDR';
+      transactions = d.transactions || [];
+      txNextId     = d.txNextId || 1;
+      payPersons   = d.payPersons   || [];
+      if(d.people)    document.getElementById('people').value     = d.people;
+      if(d.eventName) document.getElementById('event-name').value = d.eventName;
+      if(d.eventDate) document.getElementById('event-date').value = d.eventDate;
+      if(d.noteTitle) document.getElementById('note-title').value = d.noteTitle;
+      if(d.noteBody)  document.getElementById('note-body').value  = d.noteBody;
+      document.getElementById('currency').value = currency;
+      updatePfx();
+    }catch(e){}
+  }
+  if(!document.getElementById('event-date').value)
+    document.getElementById('event-date').value = today();
+  if(!document.getElementById('tx-date').value)
+    document.getElementById('tx-date').value = today();
+
+  renderItems(); updateTotalBar(); updateNotesMeta();
+  renderTransactions();
+
+  // char counter
+  document.getElementById('note-body').addEventListener('input', ()=>{
+    document.getElementById('note-char').textContent =
+      document.getElementById('note-body').value.length + ' kar';
+    save();
+  });
+  document.getElementById('note-title').addEventListener('input', save);
+
+  // format price input with dot-separator for IDR
+  document.getElementById('in-price').addEventListener('input', function(){
+    formatPriceInput(this);
+  });
+  document.getElementById('tx-amount').addEventListener('input', function(){
+    formatPriceInput(this);
+  });
+
+  // Enter keys
+  ['in-name','in-price','in-qty'].forEach(id=>{
+    document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')addItem();});
+  });
+  ['tx-name','tx-amount','tx-date','tx-payer','tx-note'].forEach(id=>{
+    document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')addTransaction();});
+  });
+})();
+
+function today(){return new Date().toISOString().slice(0,10);}
+
+/* =====================================================
+   FORMAT PRICE INPUT (titik ribuan saat mengetik)
+===================================================== */
+function formatPriceInput(el){
+  if(currency!=='IDR') return; // USD: biarkan bebas
+  // ambil angka saja
+  const raw = el.value.replace(/\./g,'').replace(/[^0-9]/g,'');
+  if(!raw){el.dataset.raw='';return;}
+  el.dataset.raw = raw;
+  // format dengan titik
+  el.value = parseInt(raw).toLocaleString('id-ID');
+}
+
+function getRawPrice(el){
+  if(currency==='IDR'){
+    // ambil dari dataset atau strip titik
+    const raw = (el.dataset.raw || el.value.replace(/\./g,'')).replace(/[^0-9]/g,'');
+    return parseFloat(raw)||0;
+  }
+  return parseFloat(el.value)||0;
+}
+
+/* =====================================================
+   SAVE
+===================================================== */
+function save(){
+  localStorage.setItem('sb4_data', JSON.stringify({
+    items,nextId,currency,transactions,txNextId,payPersons,
+    people:    document.getElementById('people').value,
+    eventName: document.getElementById('event-name').value,
+    eventDate: document.getElementById('event-date').value,
+    noteTitle: document.getElementById('note-title').value,
+    noteBody:  document.getElementById('note-body').value,
+  }));
+}
+
+/* =====================================================
+   DRAWER
+===================================================== */
+function openDrawer(){
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+/* =====================================================
+   QR CODE GENERATOR
+===================================================== */
+let qrInstance = null;
+
+function openQRModal(){
+  const total  = getTotal();
+  const people = parseInt(document.getElementById('people').value)||1;
+  const perP   = total/people;
+  const evName = document.getElementById('event-name').value||'Split Bill';
+  const evDate = document.getElementById('event-date').value;
+  const dtLbl  = evDate ? new Date(evDate+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '—';
+
+  document.getElementById('qr-ev-name').textContent  = evName;
+  document.getElementById('qr-ev-date').textContent  = dtLbl;
+  document.getElementById('qr-amount').textContent   = fmt(perP);
+  document.getElementById('qr-total').textContent    = fmt(total);
+  document.getElementById('qr-people').textContent   = people+' orang';
+  document.getElementById('qr-items').textContent    = items.length+' item';
+
+  document.getElementById('qr-modal').classList.add('open');
+  generateQR();
+}
+
+function generateQR(){
+  const total  = getTotal();
+  const people = parseInt(document.getElementById('people').value)||1;
+  const perP   = Math.round(total/people);
+  const evName = document.getElementById('event-name').value||'Split Bill';
+  const custom = document.getElementById('qr-custom-text').value.trim();
+
+  // Default QR content: ringkasan teks
+  const qrText = custom || [
+    'SPLITBILL - HFZ Company Office',
+    'Acara: '+evName,
+    'Total: '+fmtP(total),
+    'Per orang: '+fmtP(perP),
+    'Orang: '+people,
+  ].join('\n');
+
+  const wrap = document.getElementById('qr-canvas-wrap');
+  wrap.innerHTML = '';
+  try{
+    qrInstance = new QRCode(wrap, {
+      text: qrText,
+      width: 180, height: 180,
+      colorDark: '#1a1814',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  } catch(e){ wrap.innerHTML='<div style="color:#888;font-size:11px;">QR tidak tersedia</div>'; }
+}
+
+function regenerateQR(){
+  clearTimeout(window._qrTimer);
+  window._qrTimer = setTimeout(generateQR, 400);
+}
+
+function downloadQR(){
+  const wrap = document.getElementById('qr-canvas-wrap');
+  const img  = wrap.querySelector('img') || wrap.querySelector('canvas');
+  if(!img){ showToast('QR belum dibuat','err'); return; }
+  const canvas = document.createElement('canvas');
+  const SIZE   = 400;
+  canvas.width = canvas.height = SIZE;
+  const ctx    = canvas.getContext('2d');
+
+  // background
+  ctx.fillStyle = '#1a1814'; ctx.fillRect(0,0,SIZE,SIZE);
+  ctx.fillStyle = '#fff';    ctx.roundRect?ctx.roundRect(20,20,SIZE-40,SIZE-40,14):ctx.fillRect(20,20,SIZE-40,SIZE-40);
+  ctx.fill&&ctx.fill();
+  if(!ctx.roundRect){ ctx.fillStyle='#fff'; ctx.fillRect(20,20,SIZE-40,SIZE-40); }
+
+  const draw = new Image();
+  draw.onload = ()=>{
+    ctx.drawImage(draw, 60, 60, SIZE-120, SIZE-120);
+    // HFZ label
+    ctx.fillStyle='#1a1814';
+    ctx.fillRect(0,SIZE-44,SIZE,44);
+    ctx.font='bold 14px Outfit,sans-serif';
+    ctx.fillStyle='#f5c842';
+    ctx.textAlign='center';
+    ctx.fillText('HFZ Company Office · SplitBill', SIZE/2, SIZE-25);
+    ctx.font='10px Courier New';
+    ctx.fillStyle='rgba(255,255,255,.4)';
+    ctx.fillText(document.getElementById('event-name').value||'Split Bill', SIZE/2, SIZE-10);
+    ctx.textAlign='start';
+
+    canvas.toBlob(blob=>{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download='splitbill_qr.png';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('QR PNG berhasil diunduh ✓','ok');
+    },'image/png',1);
+  };
+  if(img.tagName==='CANVAS') draw.src=img.toDataURL();
+  else draw.src=img.src;
+}
+
+function closeQRModal(){
+  document.getElementById('qr-modal').classList.remove('open');
+  document.getElementById('qr-canvas-wrap').innerHTML='';
+  qrInstance=null;
+}
+
+/* =====================================================
+   PAYMENT TRACKER
+===================================================== */
+let payPersons = []; // [{name, paid}]
+
+function openPayTracker(){
+  // Auto-populate dari jumlah orang jika kosong
+  if(payPersons.length===0){
+    const n = parseInt(document.getElementById('people').value)||2;
+    payPersons = Array.from({length:n},(_,i)=>({name:'Orang '+(i+1),paid:false}));
+  }
+  renderPayList();
+  document.getElementById('paytrack-modal').classList.add('open');
+}
+function closePayTracker(){ document.getElementById('paytrack-modal').classList.remove('open'); save(); }
+
+function addPayPerson(){
+  const inp = document.getElementById('pay-name-input');
+  const name = inp.value.trim();
+  if(!name){ showToast('Isi nama dulu!','err'); return; }
+  payPersons.push({name, paid:false});
+  inp.value='';
+  renderPayList(); save();
+}
+
+function togglePaid(i){
+  payPersons[i].paid = !payPersons[i].paid;
+  renderPayList(); save();
+}
+
+function deletePayPerson(i){
+  payPersons.splice(i,1);
+  renderPayList(); save();
+}
+
+function resetPayTracker(){
+  if(confirm('Reset semua status pembayaran?')){
+    payPersons.forEach(p=>p.paid=false);
+    renderPayList(); save();
+  }
+}
+
+function renderPayList(){
+  const total  = getTotal();
+  const people = payPersons.length||1;
+  const perP   = total/people;
+  const paidN  = payPersons.filter(p=>p.paid).length;
+  const pct    = people>0 ? Math.round(paidN/people*100) : 0;
+  const collected = perP * paidN;
+  const remaining = total - collected;
+
+  document.getElementById('pay-progress-text').textContent = `${paidN} / ${people} orang`;
+  document.getElementById('pay-progress-fill').style.width = pct+'%';
+  document.getElementById('pay-collected').textContent = 'Terkumpul: '+fmt(collected);
+  document.getElementById('pay-remaining').textContent  = 'Sisa: '+fmt(Math.max(0,remaining));
+
+  const list = document.getElementById('pay-persons-list');
+  if(!payPersons.length){
+    list.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:16px;">Belum ada peserta. Tambahkan nama di atas.</div>';
+    return;
+  }
+  list.innerHTML = payPersons.map((p,i)=>`
+    <div class="pay-person-row ${p.paid?'paid':''}" onclick="togglePaid(${i})">
+      <div class="pay-name">${esc(p.name)}</div>
+      <div class="pay-amount">${fmt(perP)}</div>
+      <div class="pay-status">${p.paid?'<i class="fa-solid fa-check"></i>':''}</div>
+      <button onclick="event.stopPropagation();deletePayPerson(${i})"
+        style="background:transparent;border:none;cursor:pointer;color:var(--muted);
+               font-size:12px;padding:4px;margin-left:4px;"
+        title="Hapus"><i class="fa-solid fa-xmark"></i></button>
+    </div>`).join('');
+}
+
+/* =====================================================
+   TIP CALCULATOR
+===================================================== */
+let selectedTipPct = 10;
+
+function openTipCalc(){
+  // Pre-fill dengan total split bill
+  const total = getTotal();
+  if(total>0) document.getElementById('tip-bill').value = total;
+  document.getElementById('tip-pfx').textContent = currency==='IDR'?'Rp':'$';
+  calcTip();
+  document.getElementById('tip-modal').classList.add('open');
+}
+function closeTipCalc(){ document.getElementById('tip-modal').classList.remove('open'); }
+
+function selectTip(pct){
+  if(pct!==null){
+    selectedTipPct = pct;
+    document.getElementById('tip-custom-pct').value='';
+    [5,10,15,20].forEach(p=>{
+      document.getElementById('tip-'+p).classList.toggle('active', p===pct);
+    });
+  } else {
+    // custom
+    [5,10,15,20].forEach(p=>document.getElementById('tip-'+p).classList.remove('active'));
+    selectedTipPct = parseFloat(document.getElementById('tip-custom-pct').value)||0;
+  }
+  calcTip();
+}
+
+function calcTip(){
+  const bill   = parseFloat(document.getElementById('tip-bill').value)||0;
+  const people = parseInt(document.getElementById('tip-people').value)||1;
+  const pct    = selectedTipPct;
+  const tip    = bill * pct/100;
+  const total  = bill + tip;
+  const perP   = total/people;
+  const tipP   = tip/people;
+
+  document.getElementById('tip-amount').textContent     = fmt(tip);
+  document.getElementById('tip-total-with').textContent = fmt(total);
+  document.getElementById('tip-per-person').textContent = fmt(perP);
+  document.getElementById('tip-tip-per').textContent    = fmt(tipP);
+}
+
+function importTipToSplitBill(){
+  const bill   = parseFloat(document.getElementById('tip-bill').value)||0;
+  const pct    = selectedTipPct;
+  const tip    = bill * pct/100;
+  if(!tip){ showToast('Tip 0, tidak ada yang diimport','err'); return; }
+  items.push({ id:nextId++, name:`Tip (${pct}%)`, price:tip, qty:1 });
+  renderItems(); updateTotalBar(); save();
+  closeTipCalc();
+  goStep(2);
+  showToast(`Tip ${pct}% ditambahkan ke item ✓`,'ok');
+}
+
+
+function switchView(view){
+  ['splitbill','riwayat','stats'].forEach(v=>{
+    const el=document.getElementById('view-'+v);
+    if(el) el.style.display = v===view?'block':'none';
+  });
+  document.querySelectorAll('.drawer-menu-item[id^=menu-]').forEach(el=>el.classList.remove('active-menu'));
+  const active=document.getElementById('menu-'+view);
+  if(active) active.classList.add('active-menu');
+  if(view==='stats') buildStats();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* =====================================================
+   LICENSE / ABOUT MODALS
+===================================================== */
+function showLicenseModal(){
+  document.getElementById('lic-date').textContent =
+    new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('license-modal').classList.add('open');
+}
+function closeLicense(){ document.getElementById('license-modal').classList.remove('open'); }
+function showAboutModal(){ document.getElementById('about-modal').classList.add('open'); }
+function closeAbout(){ document.getElementById('about-modal').classList.remove('open'); }
+
+/* =====================================================
+   THEME SWITCHER
+===================================================== */
+const THEMES = {
+  warm:   {bg:'#f5f0e8',paper:'#faf7f2',ink:'#1a1814',ink2:'#3d3830',muted:'#8c8070',line:'#d8cfc0',accent:'#e85d2f',accent2:'#2b7a4b',warn:'#c4820a'},
+  dark:   {bg:'#0d0f14',paper:'#161921',ink:'#e8eaf0',ink2:'#b0b8cc',muted:'#7c85a0',line:'#2b3047',accent:'#4ade80',accent2:'#22d3ee',warn:'#fbbf24'},
+  ocean:  {bg:'#0a1628',paper:'#0f1f38',ink:'#e0f2fe',ink2:'#bae6fd',muted:'#5b7fa0',line:'#1e3a5f',accent:'#22d3ee',accent2:'#34d399',warn:'#fbbf24'},
+  forest: {bg:'#f0f7f2',paper:'#f8fdf9',ink:'#1a2e20',ink2:'#2d4a38',muted:'#6b8f74',line:'#c8e0cd',accent:'#2b7a4b',accent2:'#e85d2f',warn:'#c4820a'},
+  purple: {bg:'#1a0a2e',paper:'#231040',ink:'#f3e8ff',ink2:'#ddc4ff',muted:'#8860c0',line:'#3d1e6e',accent:'#a855f7',accent2:'#ec4899',warn:'#fbbf24'},
+  gold:   {bg:'#1a1400',paper:'#241c00',ink:'#fff8e0',ink2:'#ffe880',muted:'#a08040',line:'#3a3000',accent:'#f5c842',accent2:'#e85d2f',warn:'#a0e840'},
+};
+let currentTheme = localStorage.getItem('sb4_theme')||'warm';
+
+function applyTheme(name){
+  const t = THEMES[name]||THEMES.warm;
+  const root = document.documentElement;
+  Object.entries(t).forEach(([k,v])=> root.style.setProperty('--'+k, v));
+  currentTheme = name;
+  localStorage.setItem('sb4_theme', name);
+  document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('theme-'+name);
+  if(btn) btn.classList.add('active');
+  // update bg rule for body
+  document.body.style.background = t.bg;
+}
+function openThemePicker(){
+  document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('theme-'+currentTheme);
+  if(btn) btn.classList.add('active');
+  document.getElementById('theme-modal').classList.add('open');
+}
+function closeTheme(){ document.getElementById('theme-modal').classList.remove('open'); }
+
+// Apply saved theme on load
+(function(){ if(currentTheme!=='warm') applyTheme(currentTheme); })();
+
+/* =====================================================
+   COUNTDOWN DEADLINE
+===================================================== */
+let cdInterval;
+function openCountdown(){
+  // Pre-fill dengan tanggal acara jika ada
+  const evDate = document.getElementById('event-date').value;
+  if(evDate) document.getElementById('cd-date').value = evDate;
+  document.getElementById('countdown-modal').classList.add('open');
+  updateCountdown();
+}
+function closeCountdown(){
+  document.getElementById('countdown-modal').classList.remove('open');
+  if(cdInterval){ clearInterval(cdInterval); cdInterval=null; }
+}
+function updateCountdown(){
+  if(cdInterval){ clearInterval(cdInterval); }
+  const dateVal = document.getElementById('cd-date').value;
+  const label   = document.getElementById('cd-label').value || 'Deadline Bayar';
+  if(!dateVal){ document.getElementById('cd-msg').textContent='Pilih tanggal deadline di atas'; return; }
+  function tick(){
+    const now      = new Date();
+    const deadline = new Date(dateVal+'T23:59:59');
+    const diff     = deadline - now;
+    if(diff <= 0){
+      document.getElementById('cd-days').textContent  = '00';
+      document.getElementById('cd-hours').textContent = '00';
+      document.getElementById('cd-mins').textContent  = '00';
+      document.getElementById('cd-msg').textContent   = '⚠️ Deadline sudah lewat!';
+      return;
+    }
+    const days  = Math.floor(diff/86400000);
+    const hours = Math.floor((diff%86400000)/3600000);
+    const mins  = Math.floor((diff%3600000)/60000);
+    document.getElementById('cd-days').textContent  = String(days).padStart(2,'0');
+    document.getElementById('cd-hours').textContent = String(hours).padStart(2,'0');
+    document.getElementById('cd-mins').textContent  = String(mins).padStart(2,'0');
+    document.getElementById('cd-msg').textContent   = label;
+  }
+  tick();
+  cdInterval = setInterval(tick, 30000);
+}
+
+/* =====================================================
+   CURRENCY CONVERTER
+===================================================== */
+// Static approximate rates relative to IDR
+const RATES_TO_IDR = {IDR:1, USD:16200, MYR:3500, SGD:12000, EUR:17500, JPY:108};
+function doConvert(){
+  const amt  = parseFloat(document.getElementById('conv-amount').value)||0;
+  const from = document.getElementById('conv-from').value;
+  const to   = document.getElementById('conv-to').value;
+  if(!amt){ document.getElementById('conv-result').textContent='Masukkan jumlah di atas'; return; }
+  const inIDR  = amt * RATES_TO_IDR[from];
+  const result = inIDR / RATES_TO_IDR[to];
+  const fmtNum = v => v>=1000 ? v.toLocaleString('id-ID',{maximumFractionDigits:2}) : v.toFixed(4);
+  document.getElementById('conv-result').textContent = `${fmtNum(amt)} ${from}  =  ${fmtNum(result)} ${to}`;
+  document.getElementById('conv-rate-info').textContent =
+    `1 ${from} ≈ ${fmtNum(RATES_TO_IDR[from]/RATES_TO_IDR[to])} ${to}  ·  Kurs estimasi`;
+}
+function swapConv(){
+  const f=document.getElementById('conv-from'), t=document.getElementById('conv-to');
+  [f.value,t.value]=[t.value,f.value]; doConvert();
+}
+function openConverter(){ document.getElementById('converter-modal').classList.add('open'); }
+function closeConverter(){ document.getElementById('converter-modal').classList.remove('open'); }
+
+/* =====================================================
+   SPLIT MODE — CUSTOM & SHARES
+===================================================== */
+let splitMode='equal';
+let customPersons=[{name:'',pct:50},{name:'',pct:50}];
+let sharePersons=[{name:'',shares:1},{name:'',shares:1}];
+
+function openSplitMode(){
+  renderCustomForm(); renderSharesForm();
+  document.getElementById('splitmode-modal').classList.add('open');
+}
+function closeSplitMode(){ document.getElementById('splitmode-modal').classList.remove('open'); }
+function setSplitMode(m){
+  splitMode=m;
+  ['equal','custom','shares'].forEach(s=>{
+    document.getElementById('smode-'+s).classList.toggle('active',s===m);
+    const p=document.getElementById('split-'+s+'-panel')||document.getElementById('split-'+s+'-info');
+    if(p) p.style.display=s===m?'block':'none';
+  });
+  document.getElementById('split-equal-info').style.display=m==='equal'?'block':'none';
+  document.getElementById('split-custom-panel').style.display=m==='custom'?'block':'none';
+  document.getElementById('split-shares-panel').style.display=m==='shares'?'block':'none';
+}
+function renderCustomForm(){
+  const f=document.getElementById('custom-names-form');
+  f.innerHTML=customPersons.map((p,i)=>`
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+      <input style="flex:1;padding:7px 10px;border:1.5px solid var(--line);border-radius:6px;
+        background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:12px;outline:none;"
+        placeholder="Nama #${i+1}" value="${esc(p.name)}" oninput="customPersons[${i}].name=this.value"/>
+      <input type="number" style="width:72px;padding:7px;border:1.5px solid var(--line);border-radius:6px;
+        background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:12px;outline:none;text-align:center;"
+        placeholder="%" value="${p.pct}" min="0" max="100" oninput="customPersons[${i}].pct=parseFloat(this.value)||0"/>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">%</span>
+      ${customPersons.length>2?`<button onclick="customPersons.splice(${i},1);renderCustomForm()" style="background:transparent;border:none;cursor:pointer;color:var(--accent);font-size:14px;"><i class='fa-solid fa-xmark'></i></button>`:''}
+    </div>`).join('');
+}
+function addCustomPerson(){ customPersons.push({name:'',pct:0}); renderCustomForm(); }
+function calcCustomSplit(){
+  const total=getTotal(); if(!total){showToast('Belum ada item!','err');return;}
+  const sumPct=customPersons.reduce((s,p)=>s+p.pct,0);
+  if(Math.round(sumPct)!==100){showToast(`Total % harus 100! Saat ini: ${sumPct}%`,'err');return;}
+  const res=document.getElementById('custom-split-result');
+  res.innerHTML='<div style="display:flex;flex-direction:column;gap:6px;">'+
+    customPersons.map(p=>`
+      <div style="display:flex;justify-content:space-between;padding:8px 12px;
+        background:var(--bg);border:1.5px solid var(--line);border-radius:8px;">
+        <span style="font-size:13px;font-weight:600">${esc(p.name)||'—'} <span style="font-size:10px;color:var(--muted)">(${p.pct}%)</span></span>
+        <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">${fmt(total*p.pct/100)}</span>
+      </div>`).join('')+'</div>';
+}
+function renderSharesForm(){
+  const f=document.getElementById('shares-form');
+  f.innerHTML=sharePersons.map((p,i)=>`
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+      <input style="flex:1;padding:7px 10px;border:1.5px solid var(--line);border-radius:6px;
+        background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:12px;outline:none;"
+        placeholder="Nama #${i+1}" value="${esc(p.name)}" oninput="sharePersons[${i}].name=this.value"/>
+      <input type="number" style="width:72px;padding:7px;border:1.5px solid var(--line);border-radius:6px;
+        background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:12px;outline:none;text-align:center;"
+        placeholder="Saham" value="${p.shares}" min="1" oninput="sharePersons[${i}].shares=parseFloat(this.value)||1"/>
+      ${sharePersons.length>2?`<button onclick="sharePersons.splice(${i},1);renderSharesForm()" style="background:transparent;border:none;cursor:pointer;color:var(--accent);font-size:14px;"><i class='fa-solid fa-xmark'></i></button>`:''}
+    </div>`).join('');
+}
+function addSharePerson(){ sharePersons.push({name:'',shares:1}); renderSharesForm(); }
+function calcSharesSplit(){
+  const total=getTotal(); if(!total){showToast('Belum ada item!','err');return;}
+  const totalShares=sharePersons.reduce((s,p)=>s+p.shares,0);
+  const res=document.getElementById('shares-split-result');
+  res.innerHTML='<div style="display:flex;flex-direction:column;gap:6px;">'+
+    sharePersons.map(p=>`
+      <div style="display:flex;justify-content:space-between;padding:8px 12px;
+        background:var(--bg);border:1.5px solid var(--line);border-radius:8px;">
+        <span style="font-size:13px;font-weight:600">${esc(p.name)||'—'} <span style="font-size:10px;color:var(--muted)">(${p.shares} saham)</span></span>
+        <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">${fmt(total*p.shares/totalShares)}</span>
+      </div>`).join('')+
+    `<div style="text-align:center;font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:4px;">Total saham: ${totalShares} · Per saham: ${fmt(total/totalShares)}</div>`+
+    '</div>';
+}
+
+/* =====================================================
+   SHARE PANEL
+===================================================== */
+function openSharePanel(){
+  const total  = getTotal();
+  const people = parseInt(document.getElementById('people').value)||1;
+  const perP   = total/people;
+  const evName = document.getElementById('event-name').value||'Split Bill';
+  const evDate = document.getElementById('event-date').value;
+  const dtLbl  = evDate ? new Date(evDate+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '—';
+  document.getElementById('sc-ev-name').textContent  = evName;
+  document.getElementById('sc-ev-date').textContent  = dtLbl;
+  document.getElementById('sc-per-person').textContent = fmt(perP);
+  document.getElementById('share-text-preview').textContent = buildShareText();
+  document.getElementById('share-modal').classList.add('open');
+}
+function closeSharePanel(){ document.getElementById('share-modal').classList.remove('open'); }
+function buildShareText(){
+  const total  = getTotal();
+  const people = parseInt(document.getElementById('people').value)||1;
+  const perP   = total/people;
+  const evName = document.getElementById('event-name').value||'Acara';
+  const evDate = document.getElementById('event-date').value;
+  const dtLbl  = evDate ? new Date(evDate+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '';
+  let msg = `💰 *SPLIT BILL — ${evName}*\n`;
+  if(dtLbl) msg += `📅 ${dtLbl}\n`;
+  msg += `\n`;
+  if(items.length){
+    items.forEach((it,i)=>{
+      msg += `${i+1}. ${it.name}`;
+      if(it.qty>1) msg += ` (${it.qty}x)`;
+      msg += ` → ${fmt(it.price*it.qty)}\n`;
+    });
+  }
+  msg += `\n─────────────────────\n`;
+  msg += `💵 *Total: ${fmt(total)}*\n`;
+  msg += `👥 Orang: ${people}\n`;
+  msg += `✅ *Per orang: ${fmt(perP)}*\n`;
+  msg += `\n_Powered by SplitBill — HFZ Company Office_`;
+  return msg;
+}
+function copyShareText(){
+  const msg = buildShareText();
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(msg).then(()=>showToast('Disalin! Tempel ke WA ✓','ok')).catch(()=>fallbackCopy(msg));
+  } else { fallbackCopy(msg); }
+}
+function shareWA(){
+  const msg = encodeURIComponent(buildShareText());
+  window.open('https://wa.me/?text='+msg,'_blank');
+}
+function fallbackCopy(text){
+  const ta=document.createElement('textarea');
+  ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();document.execCommand('copy');
+  document.body.removeChild(ta);showToast('Disalin ✓','ok');
+}
+
+/* =====================================================
+   STATISTIK & ANALISIS
+===================================================== */
+function buildStats(){
+  const total    = getTotal();
+  const people   = parseInt(document.getElementById('people').value)||1;
+  const perP     = people>0?total/people:0;
+  const txTotal  = transactions.reduce((s,t)=>s+t.amount,0);
+  const allSpend = total + txTotal;
+
+  // Overview grid
+  document.getElementById('stats-overview').innerHTML = `
+    <div class="res-stat"><div class="rs-label">Total Split Bill</div><div class="rs-value" style="font-size:14px">${fmt(total)}</div></div>
+    <div class="res-stat"><div class="rs-label">Per Orang</div><div class="rs-value" style="font-size:14px;color:var(--accent)">${fmt(perP)}</div></div>
+    <div class="res-stat"><div class="rs-label">Total Transaksi</div><div class="rs-value" style="font-size:14px">${fmt(txTotal)}</div></div>
+    <div class="res-stat"><div class="rs-label">Semua Pengeluaran</div><div class="rs-value" style="font-size:14px">${fmt(allSpend)}</div></div>
+  `;
+
+  // Bar chart (canvas)
+  if(items.length){
+    const canvas = document.getElementById('stats-bar-canvas');
+    const ctx    = canvas.getContext('2d');
+    const W      = canvas.offsetWidth||400;
+    const H      = 160;
+    canvas.width  = W*2; canvas.height = H*2;
+    ctx.scale(2,2);
+    ctx.clearRect(0,0,W,H);
+    const maxVal = Math.max(...items.map(it=>it.price*it.qty));
+    const barW   = Math.min(40,(W-40)/items.length - 8);
+    const gap    = (W-40-items.length*barW)/(items.length+1);
+    items.forEach((it,i)=>{
+      const bh   = ((it.price*it.qty)/maxVal)*(H-40);
+      const x    = 20 + gap*(i+1) + barW*i;
+      const y    = H-20-bh;
+      // bar
+      ctx.fillStyle = i%2===0?'#e85d2f':'#2b7a4b';
+      ctx.beginPath();
+      ctx.roundRect?ctx.roundRect(x,y,barW,bh,4):ctx.rect(x,y,barW,bh);
+      ctx.fill();
+      // label
+      ctx.fillStyle='#8c8070';
+      ctx.font=`${Math.min(10,barW*0.7)}px Outfit,sans-serif`;
+      ctx.textAlign='center';
+      const lbl = it.name.length>6?it.name.slice(0,5)+'…':it.name;
+      ctx.fillText(lbl, x+barW/2, H-6);
+    });
+    ctx.textAlign='start';
+  }
+
+  // Item list with % bar
+  const itemListEl = document.getElementById('stats-items-list');
+  if(!items.length){ itemListEl.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:10px">Belum ada item.</div>'; }
+  else{
+    itemListEl.innerHTML = items.map((it,i)=>{
+      const itTotal = it.price*it.qty;
+      const pct     = total>0 ? Math.round(itTotal/total*100) : 0;
+      return `<div style="margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+          <span style="font-weight:600">#${i+1} ${esc(it.name)}</span>
+          <span style="font-family:var(--mono);color:var(--accent)">${pct}% · ${fmt(itTotal)}</span>
+        </div>
+        <div style="height:6px;background:var(--line);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${i%2===0?'var(--accent)':'var(--accent2)'};border-radius:3px;transition:width .6s;"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Insights
+  const insights=[];
+  if(items.length){
+    const biggest=items.reduce((a,b)=>(b.price*b.qty)>(a.price*a.qty)?b:a,items[0]);
+    insights.push({icon:'🔝',text:`Pengeluaran terbesar: <b>${biggest.name}</b> (${fmt(biggest.price*biggest.qty)})`});
+    if(people>1) insights.push({icon:'💸',text:`Setiap orang menanggung <b>${fmt(perP)}</b> dari total <b>${fmt(total)}</b>`});
+    if(total>1000000) insights.push({icon:'💡',text:`Total di atas 1 juta. Pertimbangkan cicilan atau DP terlebih dahulu.`});
+    if(items.length>=5) insights.push({icon:'📦',text:`Ada ${items.length} item — kamu bisa gunakan fitur "Mode Split Kustom" untuk pembagian yang lebih adil.`});
+    if(transactions.length) insights.push({icon:'📋',text:`Kamu punya ${transactions.length} transaksi di riwayat. Gunakan "Import ke Split Bill" untuk gabungkan.`});
+  } else {
+    insights.push({icon:'👋',text:'Belum ada item di Split Bill. Mulai tambahkan pengeluaran!'});
+  }
+  document.getElementById('stats-insights').innerHTML = insights.map(ins=>`
+    <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg);
+      border:1.5px solid var(--line);border-radius:var(--r-sm);padding:12px;">
+      <span style="font-size:18px;flex-shrink:0">${ins.icon}</span>
+      <span style="font-size:12px;line-height:1.6">${ins.text}</span>
+    </div>`).join('');
+}
+
+
+
+/* =====================================================
+   STEP NAVIGATION
+===================================================== */
+function goStep(n){
+  if(n>1){
+    const p=parseInt(document.getElementById('people').value)||0;
+    if(p<1){
+      document.getElementById('people').classList.add('err');
+      showToast('Isi jumlah orang dulu!','err');
+      if(step!==1){step=1;goStep(1);}return;
+    }
+    document.getElementById('people').classList.remove('err');
+  }
+  step=n;
+  document.querySelectorAll('.panel').forEach(el=>el.classList.remove('active'));
+  document.getElementById('panel-'+n).classList.add('active');
+  for(let i=1;i<=4;i++){
+    document.getElementById('si-'+i).className='step-item'+(i===n?' active':i<n?' done':'');
+    document.getElementById('pd-'+i).className='prog-dot'+(i===n?' active':i<n?' done':'');
+  }
+  if(n===3)buildResult();
+  if(n===4)updateNotesMeta();
+  save();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* =====================================================
+   CURRENCY
+===================================================== */
+function updatePfx(){
+  const sym = currency==='IDR'?'Rp':'$';
+  document.getElementById('pfx').textContent = sym;
+  document.getElementById('tx-pfx').textContent = sym;
+  // clear raw cache on currency change
+  document.getElementById('in-price').dataset.raw='';
+  document.getElementById('tx-amount').dataset.raw='';
+}
+function handleCurrency(){
+  currency=document.getElementById('currency').value;
+  updatePfx();
+  // reformat existing items display
+  renderItems();updateTotalBar();
+  if(step===3)buildResult();
+  save();
+}
+
+/** Format tampilan */
+function fmt(v){
+  if(currency==='IDR') return 'Rp '+Math.round(v).toLocaleString('id-ID');
+  return '$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtP(v){return fmt(v);}
+
+/* =====================================================
+   ADD ITEM
+===================================================== */
+function addItem(){
+  const nEl=document.getElementById('in-name');
+  const pEl=document.getElementById('in-price');
+  const qEl=document.getElementById('in-qty');
+  const name=nEl.value.trim();
+  const price=getRawPrice(pEl);
+  const qty=Math.max(1,parseInt(qEl.value)||1);
+  let ok=true;
+  if(!name){nEl.classList.add('err');ok=false;}else nEl.classList.remove('err');
+  if(!pEl.value||price<0){pEl.classList.add('err');ok=false;}else pEl.classList.remove('err');
+  if(!ok){showToast('Nama & harga harus diisi!','err');return;}
+  items.push({id:nextId++,name,price,qty});
+  nEl.value='';pEl.value='';pEl.dataset.raw='';qEl.value='1';
+  nEl.focus();
+  renderItems();updateTotalBar();save();
+  showToast('Item ditambahkan ✓','ok');
+}
+
+/* =====================================================
+   DELETE ITEM
+===================================================== */
+function delItem(id){
+  items=items.filter(it=>it.id!==id);
+  renderItems();updateTotalBar();save();
+  showToast('Item dihapus','');
+}
+
+/* =====================================================
+   EDIT ITEM
+===================================================== */
+function startEdit(id){
+  const it=items.find(x=>x.id===id);
+  const row=document.querySelector(`[data-id="${id}"]`);
+  row.classList.add('editing');
+  const priceFormatted = currency==='IDR' ? Math.round(it.price).toLocaleString('id-ID') : it.price;
+  row.innerHTML=`
+    <div class="item-num">#${items.indexOf(it)+1}</div>
+    <input class="ei-name" id="en-${id}" value="${esc(it.name)}" maxlength="50"/>
+    <input class="ei-num" id="ep-${id}" value="${priceFormatted}" placeholder="Harga" inputmode="numeric"
+      oninput="formatEiPrice(this)" data-raw="${Math.round(it.price)}"/>
+    <input class="ei-num" id="eq-${id}" type="number" value="${it.qty}" min="1" style="width:52px"/>
+    <div class="item-actions">
+      <button class="ic-btn ok" onclick="saveEdit(${id})" title="Simpan"><i class="fa-solid fa-check"></i></button>
+      <button class="ic-btn" onclick="renderItems()" title="Batal"><i class="fa-solid fa-xmark"></i></button>
+    </div>`;
+  document.getElementById(`en-${id}`).focus();
+}
+function formatEiPrice(el){
+  if(currency!=='IDR')return;
+  const raw=el.value.replace(/\./g,'').replace(/[^0-9]/g,'');
+  el.dataset.raw=raw;
+  if(raw) el.value=parseInt(raw).toLocaleString('id-ID');
+}
+function saveEdit(id){
+  const n=document.getElementById(`en-${id}`).value.trim();
+  const pEl=document.getElementById(`ep-${id}`);
+  const p=currency==='IDR'
+    ? parseFloat((pEl.dataset.raw||pEl.value.replace(/\./g,''))||0)
+    : parseFloat(pEl.value)||0;
+  const q=Math.max(1,parseInt(document.getElementById(`eq-${id}`).value)||1);
+  if(!n||isNaN(p)||p<0){showToast('Data tidak valid!','err');return;}
+  const it=items.find(x=>x.id===id);
+  it.name=n;it.price=p;it.qty=q;
+  renderItems();updateTotalBar();save();
+  showToast('Item diperbarui ✓','ok');
+}
+
+/* =====================================================
+   RENDER ITEMS
+===================================================== */
+function renderItems(){
+  const list=document.getElementById('items-list');
+  document.getElementById('item-badge').textContent=items.length;
+  if(!items.length){
+    list.innerHTML=`<div class="empty"><i class="fa-regular fa-rectangle-list"></i>Belum ada item. Tambahkan pengeluaran!</div>`;
+    return;
+  }
+  list.innerHTML=items.map((it,i)=>`
+    <div class="item-card" data-id="${it.id}">
+      <div class="item-num">#${i+1}</div>
+      <div class="item-name" title="${esc(it.name)}">${esc(it.name)}</div>
+      <div class="item-qty">${it.qty}x</div>
+      <div class="item-price">${fmt(it.price)}</div>
+      <div class="item-total">= ${fmt(it.price*it.qty)}</div>
+      <div class="item-actions">
+        <button class="ic-btn edt" onclick="startEdit(${it.id})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+        <button class="ic-btn del" onclick="delItem(${it.id})" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+function getTotal(){return items.reduce((s,it)=>s+(it.price*it.qty),0);}
+function updateTotalBar(){document.getElementById('tb-total').textContent=fmt(getTotal());}
+
+/* =====================================================
+   BUILD RESULT
+===================================================== */
+function buildResult(){
+  const total=getTotal();
+  const people=parseInt(document.getElementById('people').value)||0;
+  const perP=people>0?total/people:0;
+  const evName=document.getElementById('event-name').value||'—';
+  document.getElementById('rh-amount').textContent=fmt(perP);
+  document.getElementById('rh-sub').textContent=fmt(total)+' ÷ '+people+' orang';
+  document.getElementById('rs-total').textContent=fmt(total);
+  document.getElementById('rs-items').textContent=items.length+' item';
+  document.getElementById('rs-people').textContent=people+' orang';
+  document.getElementById('rs-event').textContent=evName;
+  const bd=document.getElementById('res-breakdown');
+  if(!items.length){
+    bd.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:14px 0">Belum ada item.</div>';
+    return;
+  }
+  bd.innerHTML=items.map((it,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1.5px dashed var(--line);">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--paper);background:var(--ink);
+        border-radius:4px;padding:2px 6px;flex-shrink:0">#${i+1}</div>
+      <div style="flex:1;font-size:13px;font-weight:600">${esc(it.name)}</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap">${it.qty}x ${fmt(it.price)}</div>
+      <div style="font-family:var(--mono);font-size:13px;font-weight:700;white-space:nowrap">${fmt(it.price*it.qty)}</div>
+    </div>`).join('');
+}
+
+/* =====================================================
+   NOTES META
+===================================================== */
+function updateNotesMeta(){
+  const d=document.getElementById('event-date').value;
+  const dt=d?new Date(d+'T00:00:00'):new Date();
+  const lbl=dt.toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('note-date-label').textContent='📅 '+lbl;
+  document.getElementById('note-char').textContent=document.getElementById('note-body').value.length+' kar';
+}
+
+/* =====================================================
+   GENERATE TXT CONTENT
+===================================================== */
+function genTxt(){
+  const evName=document.getElementById('event-name').value||'Patungan';
+  const evDate=document.getElementById('event-date').value;
+  const people=parseInt(document.getElementById('people').value)||1;
+  const total=getTotal();
+  const perP=total/people;
+  const noteT=document.getElementById('note-title').value||'Catatan Deal';
+  const noteB=document.getElementById('note-body').value;
+  const now=new Date().toLocaleString('id-ID',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const dtLbl=evDate?new Date(evDate+'T00:00:00').toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'}):'-';
+
+  const W=56;
+  const LINE='='.repeat(W);
+  const DASH='-'.repeat(W);
+  const DDSH='~ '.repeat(W/2);
+  function pR(s,n){return String(s).padEnd(n,' ').slice(0,n);}
+  function pL(s,n){return String(s).padStart(n,' ');}
+  function ctr(s){const sp=Math.max(0,Math.floor((W-s.length)/2));return ' '.repeat(sp)+s;}
+
+  let t='';
+  t+=LINE+'\n';
+  t+=ctr('S P L I T B I L L')+'\n';
+  t+=ctr('Kalkulator Patungan')+'\n';
+  t+=LINE+'\n\n';
+  t+='  Acara     : '+evName+'\n';
+  t+='  Tanggal   : '+dtLbl+'\n';
+  t+='  Mata Uang : '+currency+'\n';
+  t+='  Dibuat    : '+now+'\n\n';
+  t+=DASH+'\n';
+  t+='  DAFTAR PENGELUARAN\n';
+  t+=DASH+'\n';
+  if(!items.length){t+='  (tidak ada item)\n';}
+  else{
+    t+='  '+pR('NO.',4)+pR('NAMA ITEM',22)+pR('QTY',5)+pL('SATUAN',12)+pL('TOTAL',12)+'\n';
+    t+='  '+'-'.repeat(W-2)+'\n';
+    items.forEach((it,i)=>{
+      const no=pR(String(i+1).padStart(2,'0')+'.',4);
+      const nm=pR(it.name,22);
+      const q=pR(it.qty+'x',5);
+      const pr=pL(fmtP(it.price),12);
+      const tot=pL(fmtP(it.price*it.qty),12);
+      t+='  '+no+nm+q+pr+tot+'\n';
+    });
+  }
+  t+=DDSH+'\n';
+  t+='  TOTAL SEMUA     :'+pL(fmtP(total),W-18)+'\n';
+  t+='  JUMLAH ORANG    :'+pL(people+' orang',W-18)+'\n';
+  t+=LINE+'\n';
+  t+='  >> BAYAR PER ORANG  :  '+fmtP(perP)+'\n';
+  t+=LINE+'\n\n';
+  t+=DASH+'\n';
+  t+='  '+noteT.toUpperCase()+'\n';
+  t+=DASH+'\n';
+  if(noteB.trim()){noteB.split('\n').forEach(l=>{t+='  '+l+'\n';});}
+  else{t+='  (tidak ada catatan)\n';}
+  t+='\n'+LINE+'\n';
+  t+=ctr('SplitBill v3.0 — HFZ Company Office')+'\n';
+  t+=ctr('© 2025-2026 All Rights Reserved')+'\n';
+  t+=LINE+'\n';
+  return t;
+}
+
+/* =====================================================
+   PREVIEW MODAL
+===================================================== */
+function openReceipt(){
+  document.getElementById('receipt-content').textContent=genTxt();
+  document.getElementById('receipt-modal').classList.add('open');
+}
+function closeReceipt(){document.getElementById('receipt-modal').classList.remove('open');}
+document.getElementById('receipt-modal').addEventListener('click',function(e){if(e.target===this)closeReceipt();});
+
+/* =====================================================
+   DOWNLOAD PDF (gaya TXT — struk A4, warna menonjol)
+===================================================== */
+function downloadPDF(){
+  showToast('Membuat PDF…','');
+  setTimeout(()=>{
+    try{
+      const {jsPDF} = window.jspdf;
+      // Gunakan A4 portrait — cukup untuk semua konten
+      const doc = new jsPDF({unit:'mm', format:'a4', orientation:'portrait'});
+
+      const txt   = genTxt();
+      const lines = txt.split('\n');
+      const evName = (document.getElementById('event-name').value||'splitbill')
+                      .replace(/\s+/g,'_').toLowerCase();
+
+      const PW   = 210;   // A4 width mm
+      const PH   = 297;   // A4 height mm
+      const ML   = 20;    // margin left
+      const MT   = 22;    // margin top
+      const MR   = 20;    // margin right
+      const MB   = 18;    // margin bottom
+      const LH   = 5.2;   // line height mm
+      const FS   = 8.5;   // font size pt
+      const usableW = PW - ML - MR;
+
+      // Outer border (struk style)
+      doc.setDrawColor(26,24,20);
+      doc.setLineWidth(0.8);
+      doc.rect(10, 10, PW-20, PH-20);
+      // Inner thin border
+      doc.setDrawColor(216,207,192);
+      doc.setLineWidth(0.3);
+      doc.rect(13, 13, PW-26, PH-26);
+
+      doc.setFontSize(FS);
+      let y = MT;
+
+      lines.forEach(line => {
+        // Cek apakah perlu halaman baru
+        if (y + LH > PH - MB) {
+          doc.addPage();
+          // borders on new page
+          doc.setDrawColor(26,24,20); doc.setLineWidth(0.8);
+          doc.rect(10,10,PW-20,PH-20);
+          doc.setDrawColor(216,207,192); doc.setLineWidth(0.3);
+          doc.rect(13,13,PW-26,PH-26);
+          doc.setFontSize(FS);
+          y = MT;
+        }
+
+        // ─── Warna & style per jenis baris ───
+        if (line.includes('BAYAR PER ORANG') || line.includes('>> ')) {
+          // MENONJOL: merah tebal besar
+          doc.setFont('Courier','bold');
+          doc.setFontSize(FS + 1.5);
+          doc.setTextColor(232, 93, 47);   // accent orange-red
+          doc.text(line, ML, y);
+          doc.setFontSize(FS);
+          y += LH + 1; // sedikit lebih besar
+
+        } else if (line.includes('TOTAL SEMUA') || line.includes('JUMLAH ORANG')) {
+          // HIJAU tebal
+          doc.setFont('Courier','bold');
+          doc.setFontSize(FS + 0.5);
+          doc.setTextColor(43, 122, 75);   // accent green
+          doc.text(line, ML, y);
+          doc.setFontSize(FS);
+          y += LH;
+
+        } else if (/^[=]{5,}/.test(line.trim())) {
+          // Garis === hitam
+          doc.setFont('Courier','bold');
+          doc.setTextColor(26,24,20);
+          doc.text(line, ML, y);
+          y += LH;
+
+        } else if (/^[-]{5,}/.test(line.trim())) {
+          // Garis --- abu muted
+          doc.setFont('Courier','normal');
+          doc.setTextColor(140,128,112);
+          doc.text(line, ML, y);
+          y += LH;
+
+        } else if (/^[~\- ]{5,}/.test(line.trim()) && line.trim().length > 4) {
+          // Garis ~~ abu muted
+          doc.setFont('Courier','normal');
+          doc.setTextColor(180,170,155);
+          doc.text(line, ML, y);
+          y += LH;
+
+        } else if (line.includes('S P L I T B I L L') || line.includes('DAFTAR PENGELUARAN') || line.includes('CATATAN')) {
+          // Judul — tebal hitam
+          doc.setFont('Courier','bold');
+          doc.setTextColor(26,24,20);
+          doc.text(line, ML, y);
+          y += LH;
+
+        } else if (line.includes('NO.') && line.includes('NAMA ITEM')) {
+          // Header tabel — tebal
+          doc.setFont('Courier','bold');
+          doc.setTextColor(26,24,20);
+          doc.text(line, ML, y);
+          y += LH;
+
+        } else {
+          // Normal
+          doc.setFont('Courier','normal');
+          doc.setTextColor(26,24,20);
+          doc.text(line, ML, y);
+          y += LH;
+        }
+      });
+
+      doc.save(evName+'_catatan.pdf');
+      showToast('PDF berhasil diunduh ✓','ok');
+    } catch(e) {
+      console.error(e);
+      showToast('Gagal membuat PDF','err');
+    }
+  }, 80);
+}
+
+/* =====================================================
+   DOWNLOAD JPG (2x DPI, kontras tinggi, warna menonjol)
+===================================================== */
+function downloadJPG(){
+  showToast('Membuat JPG…','');
+  setTimeout(()=>{
+    try{
+      const txt   = genTxt();
+      const lines = txt.split('\n');
+      const evName= (document.getElementById('event-name').value||'splitbill')
+                    .replace(/\s+/g,'_').toLowerCase();
+
+      /* ── konstanta layout ─────────────────────── */
+      const SCALE  = 3;          // 3× → ~300 DPI, sangat tajam
+      const FS     = 15;         // font size logis (px)
+      const LH     = 27;         // tinggi satu baris logis (px)
+      const PAD_X  = 40;         // margin kiri konten
+      const PAD_TOP= 48;         // jarak atas sebelum baris pertama
+      const PAD_BOT= 70;         // ruang footer HFZ
+      const BORDER = 18;         // jarak border luar dari tepi canvas
+
+      /* ── ukur lebar teks terpanjang secara akurat ── */
+      const tmpC   = document.createElement('canvas');
+      const tmpCtx = tmpC.getContext('2d');
+      tmpCtx.font  = `bold ${FS}px "Courier New", Courier, monospace`;
+      const maxTW  = Math.max(...lines.map(l => tmpCtx.measureText(l).width), 300);
+
+      /* ── ukuran canvas logis ── */
+      const logicW = maxTW + PAD_X * 2 + 20;  // +20 safety margin kanan
+      const logicH = lines.length * LH + PAD_TOP + PAD_BOT;
+
+      /* ── setup canvas final ── */
+      const canvas  = document.getElementById('export-canvas');
+      canvas.width  = Math.ceil(logicW  * SCALE);
+      canvas.height = Math.ceil(logicH  * SCALE);
+      const ctx     = canvas.getContext('2d');
+      ctx.scale(SCALE, SCALE);
+
+      /* ── background krem bersih ── */
+      ctx.fillStyle = '#faf7f2';
+      ctx.fillRect(0, 0, logicW, logicH);
+
+      /* ── ruled lines halus ── */
+      ctx.strokeStyle = 'rgba(180,165,130,.14)';
+      ctx.lineWidth   = 0.5;
+      for(let ry = PAD_TOP; ry < logicH - PAD_BOT + 10; ry += LH){
+        ctx.beginPath();
+        ctx.moveTo(BORDER + 2, ry);
+        ctx.lineTo(logicW - BORDER - 2, ry);
+        ctx.stroke();
+      }
+
+      /* ── border luar (tebal) ── */
+      ctx.strokeStyle = '#1a1814';
+      ctx.lineWidth   = 3;
+      ctx.strokeRect(BORDER, BORDER, logicW - BORDER*2, logicH - BORDER*2);
+      /* ── border dalam (tipis) ── */
+      ctx.strokeStyle = '#c8bfb0';
+      ctx.lineWidth   = 1;
+      ctx.strokeRect(BORDER+6, BORDER+6, logicW - (BORDER+6)*2, logicH - (BORDER+6)*2);
+
+      /* ═══════════════════════════════════════════
+         PASS 1 — gambar semua strip warna background
+         SEBELUM teks, agar teks tidak tertutup
+      ═══════════════════════════════════════════ */
+      lines.forEach((line, i) => {
+        const ty = PAD_TOP + i * LH;  // top Y baris ini
+
+        if (line.includes('BAYAR PER ORANG') || line.includes('>> ')) {
+          /* strip merah penuh — tinggi lebih kecil agar pas teks */
+          ctx.fillStyle = '#e85d2f';
+          ctx.fillRect(BORDER+2, ty - 4, logicW - (BORDER+2)*2, LH + 4);
+
+        } else if (line.includes('TOTAL SEMUA') || line.includes('JUMLAH ORANG')) {
+          /* strip hijau sangat lembut */
+          ctx.fillStyle = 'rgba(43,122,75,.10)';
+          ctx.fillRect(BORDER+2, ty - 2, logicW - (BORDER+2)*2, LH + 2);
+        }
+      });
+
+      /* ═══════════════════════════════════════════
+         PASS 2 — gambar SEMUA TEKS di atas strip
+      ═══════════════════════════════════════════ */
+      ctx.textBaseline = 'alphabetic';  // lebih stabil lintas browser
+      const textY = (i) => PAD_TOP + i * LH + FS; // baseline teks baris ke-i
+
+      lines.forEach((line, i) => {
+        const y = textY(i);
+
+        if (line.includes('BAYAR PER ORANG') || line.includes('>> ')) {
+          /* PUTIH TEBAL di atas merah — kontras 100% */
+          ctx.font      = `bold ${FS+3}px "Courier New", Courier, monospace`;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(line, PAD_X, y);
+
+        } else if (line.includes('TOTAL SEMUA') || line.includes('JUMLAH ORANG')) {
+          /* Hijau gelap tebal */
+          ctx.font      = `bold ${FS+1}px "Courier New", Courier, monospace`;
+          ctx.fillStyle = '#185c30';
+          ctx.fillText(line, PAD_X, y);
+
+        } else if (/^={5,}/.test(line.trim())) {
+          /* Garis === hitam bold */
+          ctx.font      = `bold ${FS}px "Courier New", Courier, monospace`;
+          ctx.fillStyle = '#1a1814';
+          ctx.fillText(line, PAD_X, y);
+
+        } else if (/^-{5,}/.test(line.trim())) {
+          /* Garis --- abu gelap */
+          ctx.font      = `${FS}px "Courier New", Courier, monospace`;
+          ctx.fillStyle = '#6a6058';
+          ctx.fillText(line, PAD_X, y);
+
+        } else if (/^[~\s\-]{5,}$/.test(line)) {
+          /* Garis ~~~ abu muted */
+          ctx.font      = `${FS}px "Courier New", Courier, monospace`;
+          ctx.fillStyle = '#a09888';
+          ctx.fillText(line, PAD_X, y);
+
+        } else if (line.includes('S P L I T B I L L')) {
+          ctx.font      = `bold ${FS+3}px "Courier New", Courier, monospace`;
+          ctx.fillStyle = '#1a1814';
+          ctx.fillText(line, PAD_X, y);
+
+        } else if (line.includes('Kalkulator Patungan')) {
+          ctx.font      = `italic ${FS}px "Courier New", Courier, monospace`;
+          ctx.fillStyle = '#4a4238';
+          ctx.fillText(line, PAD_X, y);
+
+        } else if (/DAFTAR PENGELUARAN|CATATAN DEAL/.test(line)) {
+          ctx.font      = `bold ${FS+1}px "Courier New", Courier, monospace`;
+          ctx.fillStyle = '#1a1814';
+          ctx.fillText(line, PAD_X, y);
+
+        } else if (line.includes('NO.') && line.includes('NAMA ITEM')) {
+          ctx.font      = `bold ${FS}px "Courier New", Courier, monospace`;
+          ctx.fillStyle = '#2a2420';
+          ctx.fillText(line, PAD_X, y);
+
+        } else if (line.includes('SplitBill v3') || line.includes('All Rights Reserved')) {
+          ctx.font      = `${FS-2}px "Courier New", Courier, monospace`;
+          ctx.fillStyle = '#7a7060';
+          ctx.fillText(line, PAD_X, y);
+
+        } else {
+          /* Default: hitam pekat */
+          ctx.font      = `${FS}px "Courier New", Courier, monospace`;
+          ctx.fillStyle = '#1a1814';
+          ctx.fillText(line, PAD_X, y);
+        }
+      });
+
+      /* ── HFZ Branding Footer ── */
+      const FY = logicH - PAD_BOT + 8;
+      ctx.fillStyle = '#1a1814';
+      ctx.fillRect(BORDER+2, FY, logicW-(BORDER+2)*2, 50);
+
+      ctx.textBaseline = 'middle';
+      ctx.font      = `bold ${FS}px "Courier New", Courier, monospace`;
+      ctx.fillStyle = '#f5c842';
+      ctx.fillText('HFZ Company Office', PAD_X, FY + 16);
+
+      ctx.font      = `${FS-3}px "Courier New", Courier, monospace`;
+      ctx.fillStyle = 'rgba(255,255,255,.55)';
+      ctx.fillText('SplitBill v3.0  ·  © 2025-2026 All Rights Reserved', PAD_X, FY + 36);
+
+      /* ── selesai ── */
+      ctx.setTransform(1,0,0,1,0,0);
+
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a   = document.createElement('a');
+        a.href     = url;
+        a.download = evName+'_catatan.jpg';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('JPG berhasil diunduh ✓','ok');
+      }, 'image/jpeg', 0.97);
+
+    } catch(e) {
+      console.error('downloadJPG error:', e);
+      showToast('Gagal membuat JPG: '+e.message,'err');
+    }
+  }, 100);
+}
+
+/* =====================================================
+   RIWAYAT TRANSAKSI
+===================================================== */
+function handlePhoto(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    currentPhotoData=ev.target.result;
+    document.getElementById('photo-img').src=currentPhotoData;
+    document.getElementById('photo-preview').style.display='block';
+    document.getElementById('upload-zone').style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+function removePhoto(){
+  currentPhotoData=null;
+  document.getElementById('photo-input').value='';
+  document.getElementById('photo-preview').style.display='none';
+  document.getElementById('upload-zone').style.display='block';
+  document.getElementById('photo-img').src='';
+}
+
+function addTransaction(){
+  const nameEl  = document.getElementById('tx-name');
+  const amtEl   = document.getElementById('tx-amount');
+  const dateEl  = document.getElementById('tx-date');
+  const payerEl = document.getElementById('tx-payer');
+  const noteEl  = document.getElementById('tx-note');
+
+  const name   = nameEl.value.trim();
+  const amount = getRawPrice(amtEl);
+  const date   = dateEl.value||today();
+  const payer  = payerEl.value.trim();
+  const note   = noteEl.value.trim();
+
+  if(!name){nameEl.classList.add('err');showToast('Isi nama transaksi!','err');return;}
+  nameEl.classList.remove('err');
+  if(!amtEl.value||amount<=0){amtEl.classList.add('err');showToast('Isi jumlah transaksi!','err');return;}
+  amtEl.classList.remove('err');
+
+  transactions.push({
+    id:txNextId++, name, amount, date, payer, note,
+    photo: currentPhotoData,
+    currency,
+  });
+
+  // reset form
+  nameEl.value='';amtEl.value='';amtEl.dataset.raw='';
+  payerEl.value='';noteEl.value='';
+  dateEl.value=today();
+  removePhoto();
+
+  renderTransactions();save();
+  showToast('Transaksi disimpan ✓','ok');
+}
+
+function delTransaction(id){
+  transactions=transactions.filter(t=>t.id!==id);
+  renderTransactions();save();
+  showToast('Transaksi dihapus','');
+}
+
+function renderTransactions(){
+  const list=document.getElementById('tx-list');
+  const count=transactions.length;
+  document.getElementById('tx-list-badge').textContent=count;
+  document.getElementById('tx-count-badge').textContent=count;
+
+  const txTotal=transactions.reduce((s,t)=>s+t.amount,0);
+  document.getElementById('tx-total-display').textContent=fmt(txTotal);
+
+  if(!count){
+    list.innerHTML=`<div class="tx-empty"><i class="fa-solid fa-receipt"></i>Belum ada transaksi.<br/>Tambahkan di atas!</div>`;
+    return;
+  }
+
+  list.innerHTML=transactions.slice().reverse().map(t=>{
+    const dt=t.date?new Date(t.date+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'-';
+    return `
+    <div class="tx-card" onclick="toggleTxDetail(${t.id})">
+      <button class="tx-del" onclick="event.stopPropagation();delTransaction(${t.id})" title="Hapus">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+      <div class="tx-title">${esc(t.name)}</div>
+      <div class="tx-meta">${dt}${t.payer?' · Dibayar: '+esc(t.payer):''}</div>
+      <div class="tx-amount">${fmt(t.amount)}</div>
+      ${t.note?`<div style="font-size:11px;color:var(--muted);margin-top:3px;font-family:var(--mono)">📝 ${esc(t.note)}</div>`:''}
+      <div id="txd-${t.id}" style="display:none;margin-top:10px;">
+        ${t.photo?`<img src="${t.photo}" style="width:100%;border-radius:8px;border:1.5px solid var(--line);margin-top:6px;" alt="Struk"/>`:'<div style="font-size:11px;color:var(--muted);font-family:var(--mono)">📷 Tidak ada foto struk</div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleTxDetail(id){
+  const el=document.getElementById('txd-'+id);
+  if(el) el.style.display=el.style.display==='none'?'block':'none';
+}
+
+/** Import semua transaksi riwayat ke daftar item split bill */
+function importTxToSplitBill(){
+  if(!transactions.length){showToast('Belum ada transaksi!','err');return;}
+  let imported=0;
+  transactions.forEach(t=>{
+    items.push({id:nextId++,name:t.name,price:t.amount,qty:1});
+    imported++;
+  });
+  renderItems();updateTotalBar();save();
+  showToast(imported+' transaksi diimport ke Split Bill ✓','ok');
+  switchView('splitbill');
+  goStep(2);
+}
+
+/** Simpan hasil split bill ke riwayat */
+function saveTxFromResult(){
+  const total=getTotal();
+  const evName=document.getElementById('event-name').value||'Split Bill';
+  transactions.push({
+    id:txNextId++,
+    name:'[Split] '+evName,
+    amount:total,
+    date:document.getElementById('event-date').value||today(),
+    payer:'Patungan',
+    note:fmt(total/( parseInt(document.getElementById('people').value)||1))+'/orang',
+    photo:null,
+    currency,
+  });
+  renderTransactions();save();
+  showToast('Disimpan ke riwayat ✓','ok');
+}
+
+/* =====================================================
+   SALIN RINGKASAN (WhatsApp-ready)
+===================================================== */
+function copyShareText(){
+  const total  = getTotal();
+  const people = parseInt(document.getElementById('people').value)||1;
+  const perP   = total/people;
+  const evName = document.getElementById('event-name').value||'Acara';
+  const evDate = document.getElementById('event-date').value;
+  const dtLbl  = evDate
+    ? new Date(evDate+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})
+    : '';
+
+  let msg = `💰 *SPLIT BILL — ${evName}*\n`;
+  if(dtLbl) msg += `📅 ${dtLbl}\n`;
+  msg += `\n`;
+  if(items.length){
+    items.forEach((it,i)=>{
+      msg += `${i+1}. ${it.name}`;
+      if(it.qty>1) msg += ` (${it.qty}x)`;
+      msg += ` — ${fmt(it.price*it.qty)}\n`;
+    });
+  }
+  msg += `\n──────────────────\n`;
+  msg += `💵 *Total: ${fmt(total)}*\n`;
+  msg += `👥 Orang: ${people}\n`;
+  msg += `✅ *Per orang: ${fmt(perP)}*\n`;
+  msg += `\n_Generated by SplitBill App_`;
+
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(msg).then(()=>{
+      showToast('Ringkasan disalin! Tempel ke WA ✓','ok');
+    }).catch(()=>fallbackCopy(msg));
+  } else { fallbackCopy(msg); }
+}
+
+function fallbackCopy(text){
+  const ta=document.createElement('textarea');
+  ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  document.execCommand('copy'); document.body.removeChild(ta);
+  showToast('Ringkasan disalin ✓','ok');
+}
+
+/* =====================================================
+   EXPORT / IMPORT JSON (backup & restore)
+===================================================== */
+function exportJSON(){
+  const data = {
+    version:'3.0', exportedAt: new Date().toISOString(),
+    items, nextId, currency, transactions, txNextId,
+    people:    document.getElementById('people').value,
+    eventName: document.getElementById('event-name').value,
+    eventDate: document.getElementById('event-date').value,
+    noteTitle: document.getElementById('note-title').value,
+    noteBody:  document.getElementById('note-body').value,
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const name = (document.getElementById('event-name').value||'splitbill').replace(/\s+/g,'_').toLowerCase();
+  a.href=url; a.download=name+'_backup.json'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Backup .json diunduh ✓','ok');
+}
+
+function importJSON(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try{
+      const d = JSON.parse(ev.target.result);
+      if(!d.items) throw new Error('format tidak valid');
+      if(!confirm('Ini akan menimpa semua data saat ini. Lanjutkan?')) return;
+      items        = d.items        || [];
+      nextId       = d.nextId       || 1;
+      currency     = d.currency     || 'IDR';
+      transactions = d.transactions || [];
+      txNextId     = d.txNextId     || 1;
+      if(d.people)    document.getElementById('people').value     = d.people;
+      if(d.eventName) document.getElementById('event-name').value = d.eventName;
+      if(d.eventDate) document.getElementById('event-date').value = d.eventDate;
+      if(d.noteTitle) document.getElementById('note-title').value = d.noteTitle;
+      if(d.noteBody)  document.getElementById('note-body').value  = d.noteBody;
+      document.getElementById('currency').value = currency;
+      updatePfx(); renderItems(); updateTotalBar(); renderTransactions(); save();
+      showToast('Data berhasil dipulihkan ✓','ok');
+    } catch(err) {
+      showToast('File tidak valid!','err');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+
+function resetAll(){
+  if(!confirm('Reset semua data split bill?'))return;
+  items=[];nextId=1;currency='IDR';payPersons=[];
+  ['event-name','note-title','note-body'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('people').value='2';
+  document.getElementById('currency').value='IDR';
+  document.getElementById('event-date').value=today();
+  updatePfx();renderItems();updateTotalBar();
+  step=1;goStep(1);
+  showToast('Data split bill direset!','');
+  save();
+}
+
+/* =====================================================
+   TOAST
+===================================================== */
+let toastT;
+function showToast(msg,type){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='show'+(type?' '+type:'');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>{el.className='';},2600);
+}
+
+/* =====================================================
+   EXPENSE CHART (donut + bar)
+===================================================== */
+const CHART_COLORS = ['#e85d2f','#2b7a4b','#c4820a','#4ade80','#22d3ee','#a855f7','#ec4899','#f59e0b'];
+
+function openExpenseChart(){
+  document.getElementById('expense-chart-modal').classList.add('open');
+  setTimeout(drawExpenseChart, 80);
+}
+function closeExpenseChart(){ document.getElementById('expense-chart-modal').classList.remove('open'); }
+
+function drawExpenseChart(){
+  const canvas = document.getElementById('expense-chart-canvas');
+  const ctx    = canvas.getContext('2d');
+  const W      = canvas.offsetWidth || 400;
+  const H      = 220;
+  const SCALE  = 2;
+  canvas.width  = W * SCALE;
+  canvas.height = H * SCALE;
+  ctx.scale(SCALE, SCALE);
+  ctx.clearRect(0, 0, W, H);
+
+  if(!items.length){
+    ctx.font = '14px Outfit,sans-serif';
+    ctx.fillStyle = '#8c8070';
+    ctx.textAlign = 'center';
+    ctx.fillText('Belum ada item pengeluaran.', W/2, H/2);
+    document.getElementById('expense-chart-legend').innerHTML='';
+    document.getElementById('expense-chart-stats').innerHTML='';
+    return;
+  }
+
+  const total = getTotal();
+  const data  = items.map((it,i)=>({
+    label: it.name, value: it.price*it.qty,
+    pct: Math.round(it.price*it.qty/total*100),
+    color: CHART_COLORS[i % CHART_COLORS.length]
+  }));
+
+  // ── DONUT ──
+  const cx=H/2, cy=H/2, R=80, r=44;
+  let startAngle = -Math.PI/2;
+  data.forEach(d=>{
+    const sweep = (d.value/total) * Math.PI*2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx, cy, R, startAngle, startAngle+sweep);
+    ctx.closePath();
+    ctx.fillStyle = d.color;
+    ctx.fill();
+    startAngle += sweep;
+  });
+  // Hole
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || '#faf7f2';
+  ctx.fill();
+  // Center text
+  ctx.textAlign='center';
+  ctx.font=`bold 13px Outfit,sans-serif`;
+  ctx.fillStyle='#1a1814';
+  ctx.fillText(fmt(total), cx, cy-4);
+  ctx.font=`9px Outfit,sans-serif`;
+  ctx.fillStyle='#8c8070';
+  ctx.fillText('TOTAL', cx, cy+10);
+
+  // ── BAR CHART (kanan) ──
+  const barAreaX = H + 10;
+  const barW     = W - barAreaX - 10;
+  const barH     = 14;
+  const barGap   = (H - data.length*(barH+10)) / 2;
+  const maxVal   = Math.max(...data.map(d=>d.value));
+  ctx.textAlign = 'start';
+  data.forEach((d,i)=>{
+    const by = barGap + i*(barH+10);
+    // label
+    ctx.font=`10px Outfit,sans-serif`;
+    ctx.fillStyle='#8c8070';
+    const lbl = d.label.length>12 ? d.label.slice(0,11)+'…' : d.label;
+    ctx.fillText(lbl, barAreaX, by+8);
+    // bar background
+    ctx.fillStyle='rgba(0,0,0,.06)';
+    ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(barAreaX, by+12, barW, barH, 4); else ctx.rect(barAreaX, by+12, barW, barH); ctx.fill();
+    // bar fill
+    const fw = (d.value/maxVal)*barW;
+    ctx.fillStyle = d.color;
+    ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(barAreaX, by+12, fw, barH, 4); else ctx.rect(barAreaX, by+12, fw, barH); ctx.fill();
+    // value
+    ctx.font=`bold 9px Courier New,monospace`;
+    ctx.fillStyle='#1a1814';
+    ctx.fillText(d.pct+'%', barAreaX + fw + 3, by+23);
+  });
+
+  // ── LEGEND ──
+  const leg = document.getElementById('expense-chart-legend');
+  leg.innerHTML = data.map(d=>`
+    <div class="chart-legend-item">
+      <div class="chart-legend-dot" style="background:${d.color}"></div>
+      ${esc(d.label.length>14?d.label.slice(0,13)+'…':d.label)} ${d.pct}%
+    </div>`).join('');
+
+  // ── STATS ──
+  const sorted = [...data].sort((a,b)=>b.value-a.value);
+  const biggest = sorted[0];
+  const smallest= sorted[sorted.length-1];
+  document.getElementById('expense-chart-stats').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="res-stat"><div class="rs-label">🔝 Terbesar</div>
+        <div style="font-size:13px;font-weight:700;color:var(--accent)">${esc(biggest.label)}<br/>${fmt(biggest.value)}</div></div>
+      <div class="res-stat"><div class="rs-label">🔻 Terkecil</div>
+        <div style="font-size:13px;font-weight:700;color:var(--accent2)">${esc(smallest.label)}<br/>${fmt(smallest.value)}</div></div>
+      <div class="res-stat"><div class="rs-label">📊 Rata-rata item</div>
+        <div style="font-size:13px;font-weight:700;">${fmt(total/items.length)}</div></div>
+      <div class="res-stat"><div class="rs-label">🧾 Jumlah item</div>
+        <div style="font-size:13px;font-weight:700;">${items.length}</div></div>
+    </div>`;
+}
+
+/* =====================================================
+   LOAN TRACKER (Hutang & Piutang)
+===================================================== */
+let loans = [];
+let loanNextId = 1;
+
+function openLoanTracker(){
+  document.getElementById('loan-pfx').textContent = currency==='IDR'?'Rp':'$';
+  renderLoanList();
+  document.getElementById('loan-modal').classList.add('open');
+}
+function closeLoanTracker(){
+  document.getElementById('loan-modal').classList.remove('open');
+  save();
+}
+function addLoan(type){
+  const name   = document.getElementById('loan-name').value.trim();
+  const amount = parseFloat(document.getElementById('loan-amount').value)||0;
+  const note   = document.getElementById('loan-note').value.trim();
+  if(!name || !amount){ showToast('Isi nama dan jumlah!','err'); return; }
+  loans.push({ id:loanNextId++, name, amount, type, note, settled:false,
+    date:new Date().toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}) });
+  document.getElementById('loan-name').value='';
+  document.getElementById('loan-amount').value='';
+  document.getElementById('loan-note').value='';
+  renderLoanList(); save();
+  showToast(`${type==='hutang'?'Hutang':'Piutang'} ditambahkan ✓`,'ok');
+}
+function toggleLoanSettled(id){
+  const l=loans.find(x=>x.id===id); if(l) l.settled=!l.settled;
+  renderLoanList(); save();
+}
+function deleteLoan(id){
+  loans=loans.filter(x=>x.id!==id); renderLoanList(); save();
+  showToast('Dihapus','');
+}
+function renderLoanList(){
+  const totalH = loans.filter(l=>l.type==='hutang'&&!l.settled).reduce((s,l)=>s+l.amount,0);
+  const totalP = loans.filter(l=>l.type==='piutang'&&!l.settled).reduce((s,l)=>s+l.amount,0);
+  document.getElementById('loan-total-hutang').textContent  = fmt(totalH);
+  document.getElementById('loan-total-piutang').textContent = fmt(totalP);
+  const list=document.getElementById('loan-list');
+  if(!loans.length){
+    list.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:16px;">Belum ada catatan hutang/piutang.</div>';
+    return;
+  }
+  list.innerHTML = loans.map(l=>`
+    <div class="loan-row ${l.settled?'loan-settled':''}" onclick="toggleLoanSettled(${l.id})">
+      <div class="loan-badge ${l.type}">${l.type==='hutang'?'DIUTANGI':'BERHUTANG'}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(l.name)}</div>
+        ${l.note?`<div style="font-size:10px;color:var(--muted);font-family:var(--mono);">${esc(l.note)}</div>`:''}
+        <div style="font-size:9px;color:var(--muted);font-family:var(--mono);">${l.date}</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:13px;font-weight:700;flex-shrink:0;
+        color:${l.type==='hutang'?'var(--accent)':'var(--accent2)'};">${fmt(l.amount)}</div>
+      ${l.settled?'<span style="font-size:10px;color:var(--accent2);font-weight:700;">✓LUNAS</span>':''}
+      <button onclick="event.stopPropagation();deleteLoan(${l.id})"
+        style="background:transparent;border:none;cursor:pointer;color:var(--muted);font-size:12px;padding:4px;">
+        <i class="fa-solid fa-xmark"></i></button>
+    </div>`).join('');
+}
+
+/* =====================================================
+   QUICK MEMO
+===================================================== */
+let memos = [];
+let memoNextId = 1;
+
+function openQuickMemo(){
+  renderMemoList();
+  document.getElementById('memo-modal').classList.add('open');
+}
+function closeQuickMemo(){
+  document.getElementById('memo-modal').classList.remove('open');
+  save();
+}
+function saveMemo(){
+  const text = document.getElementById('memo-input').value.trim();
+  if(!text){ showToast('Tulis memo dulu!','err'); return; }
+  const now = new Date().toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+  memos.unshift({ id:memoNextId++, text, date:now });
+  document.getElementById('memo-input').value='';
+  renderMemoList(); save();
+  showToast('Memo tersimpan ✓','ok');
+}
+function clearMemoInput(){ document.getElementById('memo-input').value=''; }
+function deleteMemo(id){ memos=memos.filter(m=>m.id!==id); renderMemoList(); save(); }
+function renderMemoList(){
+  const list=document.getElementById('memo-list');
+  if(!memos.length){
+    list.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px;">Belum ada memo.</div>';
+    return;
+  }
+  list.innerHTML='<div class="memo-list">'+memos.map(m=>`
+    <div class="memo-item">
+      <div class="memo-item-text">${esc(m.text)}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+        <div class="memo-item-date">${m.date}</div>
+        <button onclick="deleteMemo(${m.id})" style="background:transparent;border:none;cursor:pointer;
+          color:var(--muted);font-size:11px;" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>`).join('')+'</div>';
+}
+// Ctrl+Enter untuk simpan memo
+document.addEventListener('DOMContentLoaded',()=>{
+  const ta=document.getElementById('memo-input');
+  if(ta) ta.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key==='Enter') saveMemo(); });
+});
+
+/* =====================================================
+   BUDGET PLANNER
+===================================================== */
+let budgetCats = [];
+let budgetNextId = 1;
+
+function openBudgetPlanner(){
+  document.getElementById('budget-pfx').textContent = currency==='IDR'?'Rp':'$';
+  // Auto-populate dari total split bill
+  const total=getTotal();
+  if(total>0&&!document.getElementById('budget-total').value)
+    document.getElementById('budget-total').value=total;
+  // Auto-populate categories dari items jika kosong
+  if(!budgetCats.length && items.length){
+    budgetCats = items.map(it=>({
+      id:budgetNextId++, name:it.name,
+      budget:it.price*it.qty, actual:it.price*it.qty
+    }));
+  }
+  renderBudgetCats();
+  renderBudgetAnalysis();
+  document.getElementById('budget-modal').classList.add('open');
+}
+function closeBudgetPlanner(){
+  document.getElementById('budget-modal').classList.remove('open');
+  save();
+}
+function addBudgetCat(){
+  const name=document.getElementById('budget-cat-name').value.trim();
+  if(!name){ showToast('Isi nama kategori!','err'); return; }
+  budgetCats.push({id:budgetNextId++,name,budget:0,actual:0});
+  document.getElementById('budget-cat-name').value='';
+  renderBudgetCats(); renderBudgetAnalysis(); save();
+}
+function deleteBudgetCat(id){ budgetCats=budgetCats.filter(c=>c.id!==id); renderBudgetCats(); renderBudgetAnalysis(); save(); }
+function renderBudgetCats(){
+  const el=document.getElementById('budget-categories');
+  if(!budgetCats.length){ el.innerHTML=''; return; }
+  el.innerHTML=budgetCats.map(c=>`
+    <div class="budget-cat-row">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:600;margin-bottom:4px;">${esc(c.name)}</div>
+        <div style="display:flex;gap:6px;">
+          <input type="number" placeholder="Budget" value="${c.budget}" min="0"
+            style="width:50%;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;
+            background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:11px;outline:none;"
+            oninput="budgetCats.find(x=>x.id===${c.id}).budget=parseFloat(this.value)||0;renderBudgetAnalysis();save()"/>
+          <input type="number" placeholder="Aktual" value="${c.actual}" min="0"
+            style="width:50%;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;
+            background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:11px;outline:none;"
+            oninput="budgetCats.find(x=>x.id===${c.id}).actual=parseFloat(this.value)||0;renderBudgetAnalysis();save()"/>
+        </div>
+      </div>
+      <button onclick="deleteBudgetCat(${c.id})"
+        style="background:transparent;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:4px;align-self:flex-start;">
+        <i class="fa-solid fa-xmark"></i></button>
+    </div>`).join('');
+}
+function renderBudgetAnalysis(){
+  const totalBudget = parseFloat(document.getElementById('budget-total').value)||0;
+  const totalActual = budgetCats.reduce((s,c)=>s+c.actual,0);
+  const totalBudCat = budgetCats.reduce((s,c)=>s+c.budget,0);
+  const sisa        = totalBudget - totalActual;
+  const pct         = totalBudget>0 ? Math.min(100,Math.round(totalActual/totalBudget*100)) : 0;
+  const over        = totalActual > totalBudget && totalBudget>0;
+
+  const el=document.getElementById('budget-analysis');
+  if(!totalBudget && !budgetCats.length){ el.innerHTML=''; return; }
+
+  const barItems = budgetCats.map((c,i)=>{
+    const catPct = totalActual>0 ? (c.actual/totalActual)*100 : 0;
+    const overCat= c.actual>c.budget && c.budget>0;
+    return `
+      <div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+          <span style="font-weight:600">${esc(c.name)}</span>
+          <span style="font-family:var(--mono);color:${overCat?'var(--accent)':'var(--ink)'}">
+            ${fmt(c.actual)} / ${fmt(c.budget)}</span>
+        </div>
+        <div class="budget-bar-wrap">
+          <div class="budget-bar-fill" style="width:${c.budget>0?Math.min(100,Math.round(c.actual/c.budget*100)):0}%;
+            background:${overCat?'var(--accent)':CHART_COLORS[i%CHART_COLORS.length]};"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = barItems + `
+    <div class="budget-summary-box">
+      <div>
+        <div style="font-size:10px;opacity:.5;letter-spacing:1px;text-transform:uppercase;">Terpakai / Budget</div>
+        <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${over?'var(--accent)':'var(--accent2)'};">
+          ${pct}%</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:10px;opacity:.5;letter-spacing:1px;text-transform:uppercase;">${over?'OVER BUDGET':'Sisa Budget'}</div>
+        <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:${over?'var(--accent)':'var(--accent2)'};">
+          ${over?'- ':'+'}${fmt(Math.abs(sisa))}</div>
+      </div>
+    </div>`;
+}
+
+
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
